@@ -133,17 +133,17 @@
             </div>
 
             <div class="pt-4 space-y-3">
-                <button onclick="saveToGoogleDrive()" class="w-full py-3 bg-blue-600 text-white rounded-2xl font-bold flex items-center justify-center shadow-lg active:scale-95 transition-transform">
-                    <i class="fab fa-google-drive mr-2"></i> 📤 儲存到Google Drive
+                <button onclick="saveToGoogleSheets()" class="w-full py-3 bg-green-600 text-white rounded-2xl font-bold flex items-center justify-center shadow-lg active:scale-95 transition-transform">
+                    <i class="fas fa-table mr-2"></i> 📤 儲存到Google試算表
                 </button>
-                <button onclick="downloadJSON()" class="w-full py-3 bg-green-600 text-white rounded-2xl font-bold flex items-center justify-center shadow-lg active:scale-95 transition-transform">
+                <button onclick="downloadJSON()" class="w-full py-3 bg-blue-600 text-white rounded-2xl font-bold flex items-center justify-center shadow-lg active:scale-95 transition-transform">
                     <i class="fas fa-download mr-2"></i> 📄 下載JSON檔案
                 </button>
                 <button onclick="exportHTML()" class="w-full py-3 bg-slate-800 text-white rounded-2xl font-bold flex items-center justify-center shadow-lg active:scale-95 transition-transform">
                     <i class="fas fa-file-export mr-2"></i> 💾 匯出HTML檔案
                 </button>
                 <p class="text-[10px] text-center text-slate-400 mt-2 italic">
-                    💡 Google Drive整合需先設定，請參考桌面說明文件
+                    💡 資料會儲存到共享的Google試算表，家人可直接編輯
                 </p>
             </div>
         </div>
@@ -214,42 +214,42 @@
         let itinerary = {};
         let checklistData = [];
         let editMode = false;
-        let googleDriveEnabled = false;
+        let googleSheetsEnabled = false;
         const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyakqgwA4BUhl3uflYSOQU1dSERuNlUQuzKtIYPblJMQPkAOSMv-XrOQtL0QkKmvwabcA/exec'; // Google Apps Script URL
 
         // --- 3. Core Functions ---
         let currentDay = 'pre';
 
-        // Google Drive 功能
-        async function loadFromGoogleDrive() {
+        // Google Sheets 功能
+        async function loadFromGoogleSheets() {
             if (!GOOGLE_APPS_SCRIPT_URL || GOOGLE_APPS_SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
-                console.log('Google Drive URL未設定');
+                console.log('Google Sheets URL未設定');
                 return false;
             }
             
             try {
                 // 使用GET請求載入資料
-                const loadUrl = GOOGLE_APPS_SCRIPT_URL + '?action=load&callback=handleGoogleDriveResponse';
+                const loadUrl = GOOGLE_APPS_SCRIPT_URL + '?action=load&callback=handleGoogleSheetsResponse';
                 
                 // 創建script標籤來避免CORS問題
                 return new Promise((resolve) => {
-                    window.handleGoogleDriveResponse = function(data) {
+                    window.handleGoogleSheetsResponse = function(data) {
                         if (data && data.success) {
                             itinerary = data.data.itinerary;
                             checklistData = data.data.checklistData;
-                            googleDriveEnabled = true;
-                            showNotification('已從Google Drive載入資料！');
+                            googleSheetsEnabled = true;
+                            showNotification('已從Google試算表載入資料！');
                             resolve(true);
                         } else {
                             resolve(false);
                         }
-                        delete window.handleGoogleDriveResponse;
+                        delete window.handleGoogleSheetsResponse;
                     };
                     
                     const script = document.createElement('script');
                     script.src = loadUrl;
                     script.onerror = () => {
-                        console.log('Google Drive載入失敗');
+                        console.log('Google Sheets載入失敗');
                         resolve(false);
                     };
                     document.head.appendChild(script);
@@ -260,14 +260,14 @@
                     }, 5000);
                 });
             } catch (error) {
-                console.log('Google Drive載入失敗:', error);
+                console.log('Google Sheets載入失敗:', error);
                 return false;
             }
         }
 
-        async function saveToGoogleDrive() {
+        async function saveToGoogleSheets() {
             if (!GOOGLE_APPS_SCRIPT_URL) {
-                showNotification('Google Drive URL未設定');
+                showNotification('Google Sheets URL未設定');
                 return false;
             }
             
@@ -284,20 +284,20 @@
                 });
                 
                 // 由於no-cors模式，我們假設成功
-                showNotification('資料已嘗試儲存到Google Drive');
+                showNotification('資料已儲存到Google試算表！');
                 return true;
             } catch (error) {
-                showNotification('Google Drive儲存失敗: ' + error.message);
+                showNotification('Google試算表儲存失敗: ' + error.message);
                 return false;
             }
         }
 
         // 載入資料
         async function loadData() {
-            // 先嘗試從Google Drive載入
-            const googleDriveLoaded = await loadFromGoogleDrive();
+            // 先嘗試從Google Sheets載入
+            const googleSheetsLoaded = await loadFromGoogleSheets();
             
-            if (!googleDriveLoaded) {
+            if (!googleSheetsLoaded) {
                 try {
                     // 嘗試從外部JSON檔案載入
                     const response = await fetch('nagoya_trip_data.json');

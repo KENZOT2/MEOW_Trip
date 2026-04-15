@@ -1,8 +1,8 @@
 // Google Apps Script 後端程式碼
 // 請將此程式碼貼到 Google Apps Script 編輯器中
 
-// 1. 設定你的共享資料夾ID
-const SHARED_FOLDER_ID = 'YOUR_SHARED_FOLDER_ID_HERE'; // 請替換為實際的資料夾ID
+// 1. 設定你的試算表ID
+const SPREADSHEET_ID = '1Iqis5KA0yxV6WIz6kTDAI1-GBUHirebzzM54_s1Ppqk'; // Google試算表ID
 
 // 2. 主要的HTML服務
 function doGet(e) {
@@ -43,27 +43,59 @@ function doGet(e) {
   `).setTitle('Nagoya Trip API').setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
-// 3. 儲存資料到Google Drive
+// 3. 儲存資料到Google試算表
 function saveData(data) {
   try {
-    const folder = DriveApp.getFolderById(SHARED_FOLDER_ID);
+    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
     
-    // 尋找現有的JSON檔案
-    let file;
-    const files = folder.getFilesByName('nagoya_trip_data.json');
-    if (files.hasNext()) {
-      file = files.next();
-    } else {
-      // 如果檔案不存在，建立新檔案
-      file = folder.createFile('nagoya_trip_data.json', JSON.stringify(data, null, 4), MimeType.JSON);
+    // 清空現有資料
+    const sheet = spreadsheet.getSheets()[0];
+    sheet.clear();
+    
+    // 寫入標題
+    sheet.getRange(1, 1).setValue('類型');
+    sheet.getRange(1, 2).setValue('標題');
+    sheet.getRange(1, 3).setValue('時間');
+    sheet.getRange(1, 4).setValue('描述');
+    sheet.getRange(1, 5).setValue('日期');
+    
+    // 寫入行程資料
+    let row = 2;
+    for (const day in data.itinerary) {
+      data.itinerary[day].forEach(item => {
+        sheet.getRange(row, 1).setValue(item.type);
+        sheet.getRange(row, 2).setValue(item.title);
+        sheet.getRange(row, 3).setValue(item.time);
+        sheet.getRange(row, 4).setValue(item.desc);
+        sheet.getRange(row, 5).setValue(day);
+        row++;
+      });
     }
     
-    // 更新檔案內容
-    file.setContent(JSON.stringify(data, null, 4));
+    // 寫入檢查清單到第二個工作表
+    let checklistSheet;
+    try {
+      checklistSheet = spreadsheet.getSheetByName('Checklist');
+      if (!checklistSheet) {
+        checklistSheet = spreadsheet.insertSheet('Checklist');
+      }
+      checklistSheet.clear();
+      checklistSheet.getRange(1, 1).setValue('項目');
+      checklistSheet.getRange(1, 2).setValue('已完成');
+      
+      row = 2;
+      data.checklistData.forEach(item => {
+        checklistSheet.getRange(row, 1).setValue(item.text);
+        checklistSheet.getRange(row, 2).setValue(item.checked);
+        row++;
+      });
+    } catch(e) {
+      console.log('Checklist sheet error:', e);
+    }
     
     return {
       success: true,
-      message: '資料已成功儲存到Google Drive',
+      message: '資料已成功儲存到Google試算表',
       timestamp: new Date().toISOString()
     };
   } catch(error) {
@@ -76,32 +108,62 @@ function saveData(data) {
   }
 }
 
-// 4. 從Google Drive載入資料
+// 4. 從Google試算表載入資料
 function loadData() {
   try {
-    const folder = DriveApp.getFolderById(SHARED_FOLDER_ID);
+    const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+    const sheet = spreadsheet.getSheets()[0];
     
-    // 尋找JSON檔案
-    const files = folder.getFilesByName('nagoya_trip_data.json');
-    if (files.hasNext()) {
-      const file = files.next();
-      const content = file.getBlob().getDataAsString();
-      return {
-        success: true,
-        data: JSON.parse(content),
-        message: '資料載入成功'
-      };
-    } else {
-      // 如果檔案不存在，回傳預設資料
-      return {
-        success: true,
-        data: {
-          itinerary: {},
-          checklistData: []
-        },
-        message: '使用預設資料'
-      };
+    const data = sheet.getDataRange().getValues();
+    const itinerary = {};
+    
+    // 讀取行程資料（跳過標題行）
+    for (let i = 1; i < data.length; i++) {
+      const row = data[i];
+      const type = row[0];
+      const title = row[1];
+      const time = row[2];
+      const desc = row[3];
+      const day = row[4];
+      
+      if (!itinerary[day]) {
+        itinerary[day] = [];
+      }
+      
+      itinerary[day].push({
+        type: type,
+        title: title,
+        time: time,
+        desc: desc
+      });
     }
+    
+    // 讀取檢查清單
+    let checklistData = [];
+    try {
+      const checklistSheet = spreadsheet.getSheetByName('Checklist');
+      if (checklistSheet) {
+        const checklistDataRange = checklistSheet.getDataRange().getValues();
+        for (let i = 1; i < checklistDataRange.length; i++) {
+          const row = checklistDataRange[i];
+          checklistData.push({
+            text: row[0],
+            checked: row[1] === true || row[1] === 'TRUE'
+          });
+        }
+      }
+    } catch(e) {
+      console.log('Checklist load error:', e);
+    }
+    
+    return {
+      success: true,
+      data: {
+        itinerary: itinerary,
+        checklistData: checklistData
+      },
+      message: '資料載入成功'
+    };
   } catch(error) {
     console.error('載入失敗:', error);
     return {
@@ -112,68 +174,7 @@ function loadData() {
   }
 }
 
-// 5. 取得檔案清單（用於除錯）
-function listFiles() {
-  try {
-    const folder = DriveApp.getFolderById(SHARED_FOLDER_ID);
-    const files = [];
-    const fileIterator = folder.getFiles();
-    
-    while (fileIterator.hasNext()) {
-      const file = fileIterator.next();
-      files.push({
-        name: file.getName(),
-        size: file.getSize(),
-        created: file.getDateCreated().toISOString(),
-        modified: file.getLastUpdated().toISOString()
-      });
-    }
-    
-    return {
-      success: true,
-      files: files
-    };
-  } catch(error) {
-    return {
-      success: false,
-      error: error.toString()
-    };
-  }
-}
-
-// 6. 建立備份
-function createBackup() {
-  try {
-    const folder = DriveApp.getFolderById(SHARED_FOLDER_ID);
-    const files = folder.getFilesByName('nagoya_trip_data.json');
-    
-    if (files.hasNext()) {
-      const originalFile = files.next();
-      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-      const backupName = `nagoya_trip_data_backup_${timestamp}.json`;
-      
-      // 建立備份檔案
-      originalFile.makeCopy(backupName);
-      
-      return {
-        success: true,
-        message: `備份已建立: ${backupName}`
-      };
-    }
-    
-    return {
-      success: false,
-      message: '找不到原始檔案進行備份'
-    };
-  } catch(error) {
-    return {
-      success: false,
-      error: error.toString()
-    };
-  }
-}
-
-// 7. 處理POST請求
+// 5. 處理POST請求
 function doPost(e) {
   try {
     const params = JSON.parse(e.postData.contents);
@@ -185,14 +186,6 @@ function doPost(e) {
       
       case 'load':
         return ContentService.createTextOutput(JSON.stringify(loadData()))
-          .setMimeType(ContentService.MimeType.JSON);
-      
-      case 'backup':
-        return ContentService.createTextOutput(JSON.stringify(createBackup()))
-          .setMimeType(ContentService.MimeType.JSON);
-      
-      case 'list':
-        return ContentService.createTextOutput(JSON.stringify(listFiles()))
           .setMimeType(ContentService.MimeType.JSON);
       
       default:
