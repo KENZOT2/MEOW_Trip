@@ -132,11 +132,16 @@
                 </div>
             </div>
 
-            <div class="pt-4">
-                <button onclick="exportHTML()" class="w-full py-4 bg-slate-800 text-white rounded-2xl font-bold flex items-center justify-center shadow-lg active:scale-95 transition-transform">
+            <div class="pt-4 space-y-3">
+                <button onclick="downloadJSON()" class="w-full py-3 bg-green-600 text-white rounded-2xl font-bold flex items-center justify-center shadow-lg active:scale-95 transition-transform">
+                    <i class="fas fa-download mr-2"></i> 📄 下載更新後的JSON檔案
+                </button>
+                <button onclick="exportHTML()" class="w-full py-3 bg-slate-800 text-white rounded-2xl font-bold flex items-center justify-center shadow-lg active:scale-95 transition-transform">
                     <i class="fas fa-file-export mr-2"></i> 💾 儲存並匯出成新網頁檔案
                 </button>
-                <p class="text-[10px] text-center text-slate-400 mt-3 italic">點擊按鈕可下載包含妳修改內容的全新 HTML，方便傳給家人分享。</p>
+                <p class="text-[10px] text-center text-slate-400 mt-2 italic">
+                    💡 網頁編輯模式會自動更新JSON資料，點擊「下載JSON」可取得最新版本上傳到GitHub
+                </p>
             </div>
         </div>
 
@@ -343,8 +348,28 @@
         }
 
         function saveDataChanges() {
-            // 這裡可以實現將編輯後的內容同步回資料結構
+            // 將編輯後的內容同步回資料結構
+            if (currentDay === 'pre') return;
+            
+            const cards = document.querySelectorAll(`#list-${currentDay} .timeline-card`);
+            cards.forEach((card, idx) => {
+                if (itinerary[currentDay] && itinerary[currentDay][idx]) {
+                    // 更新標題
+                    const titleEl = card.querySelector('h3');
+                    if (titleEl) {
+                        itinerary[currentDay][idx].title = titleEl.textContent.trim();
+                    }
+                    
+                    // 更新描述
+                    const descEl = card.querySelector('.text-slate-600');
+                    if (descEl) {
+                        itinerary[currentDay][idx].desc = descEl.textContent.trim();
+                    }
+                }
+            });
+            
             saveStorage();
+            showNotification('編輯已儲存到JSON資料！');
         }
 
         function renderDay(dayId) {
@@ -457,6 +482,34 @@
         function calcT() { const j = document.getElementById('jpyV').value; document.getElementById('twdV').value = Math.round(j * 0.21); }
         function calcJ() { const t = document.getElementById('twdV').value; document.getElementById('jpyV').value = Math.round(t / 0.21); }
 
+        // 通知功能
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-20 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-pulse';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // 下載JSON檔案功能
+        function downloadJSON() {
+            const dataStr = JSON.stringify({itinerary, checklistData}, null, 4);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'nagoya_trip_data.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification('JSON檔案已下載！');
+        }
+
         // Export Logic
         function exportHTML() {
             let fullHTML = document.documentElement.outerHTML;
@@ -476,7 +529,7 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             
-            alert("匯出成功！新的共編網頁檔案已存入下載資料夾，可以上傳到GitHub與家人共編了。");
+            showNotification("HTML檔案已匯出，可上傳到GitHub！");
         }
 
         // 初始化
