@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="zh-TW"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Nagoya Birthday Trip 2026 - 共編版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
+        body { font-family: 'Roboto', sans-serif; background-color: #f3f4f7; color: #1e293b; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        /* UI Mimic Styles */
+        .top-bar { background-color: #3b82f6; color: white; text-align: center; }
+        .date-card { width: 68px; height: 80px; border-radius: 14px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; background: white; color: #64748b; font-size: 11px; cursor: pointer; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: 0.2s; border: 1px solid #e2e8f0; }
+        .date-card.active { background-color: #2563eb; color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4); transform: translateY(-2px); border-color: transparent; }
+        .date-card .day-num { font-size: 20px; font-weight: 900; margin: 2px 0; }
+        
+        .timeline-card { background: white; border-radius: 18px; border: 1px solid #f1f5f9; padding: 16px; margin-bottom: 14px; display: flex; box-shadow: 0 2px 6px rgba(0,0,0,0.03);}
+        
+        /* Tags & Colors - Consistent as requested */
+        .tag { font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 900; margin-left: auto; text-transform: uppercase; letter-spacing: 0.5px;}
+        .type-flight .tag { background: #dbeafe; color: #1e40af; }
+        .type-transport .tag { background: #dcfce7; color: #166534; }
+        .type-hotel .tag { background: #f3e8ff; color: #6b21a8; }
+        .type-food .tag { background: #fef9c3; color: #854d0e; }
+        .type-activity .tag { background: #fee2e2; color: #991b1b; }
+        
+        .icon-box { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0;}
+        .type-flight .icon-box { color: #3b82f6; background: #eff6ff; }
+        .type-transport .icon-box { color: #10b981; background: #ecfdf5; }
+        .type-hotel .icon-box { color: #8b5cf6; background: #f5f3ff; }
+        .type-food .icon-box { color: #f59e0b; background: #fffbeb; }
+        .type-activity .icon-box { color: #ef4444; background: #fef2f2; }
+
+        .action-btn { background: white; border: 1px solid #e2e8f0; color: #475569; border-radius: 12px; padding: 10px 0; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: 0.2s;}
+        .action-btn:active { transform: scale(0.95); background: #f8fafc; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px);} to { opacity: 1; transform: translateY(0);} }
+        .strikethrough { text-decoration: line-through; color: #cbd5e1; }
+        
+        input[type="time"]::-webkit-calendar-picker-indicator { cursor: pointer; }
+
+        /* 編輯模式樣式 */
+        .edit-mode-btn { background: #10b981; color: white; }
+        .edit-mode-btn:hover { background: #059669; }
+        .editable:hover { background-color: #fef3c7; cursor: text; border-radius: 8px; transition: background-color 0.2s; }
+        .editing { background-color: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 4px 8px; }
+    </style>
+</head>
+<body class="pb-10">
+
+    <div class="top-bar px-4 py-4 flex items-center justify-center sticky top-0 z-50 shadow-md">
+        <span class="font-bold text-lg tracking-widest uppercase">Nagoya Birthday Trip</span>
+        <button onclick="toggleEditMode()" class="ml-auto bg-green-500 text-white px-3 py-1 rounded-lg text-sm font-bold hover:bg-green-600 transition">
+            <i class="fas fa-edit mr-1"></i> <span id="editModeText">開啟編輯</span>
+        </button>
+    </div>
+
+    <div class="bg-slate-50 px-4 py-5 border-b flex space-x-3 overflow-x-auto no-scrollbar">
+        <div class="date-card active" id="btn-pre" onclick="showTab('pre')">
+            <span class="font-black text-[10px] mb-1">PRE</span><span class="day-num"><i class="fas fa-tasks"></i></span><span>行前準備</span>
+        </div>
+        <div class="date-card" id="btn-d1" onclick="showTab('d1')">
+            <span>Thu</span><span class="day-num">30</span><span>Apr</span>
+        </div>
+        <div class="date-card" id="btn-d2" onclick="showTab('d2')">
+            <span>Fri</span><span class="day-num">1</span><span>May</span>
+        </div>
+        <div class="date-card" id="btn-d3" onclick="showTab('d3')">
+            <span>Sat</span><span class="day-num">2</span><span>May</span>
+        </div>
+        <div class="date-card" id="btn-d4" onclick="showTab('d4')">
+            <span>Sun</span><span class="day-num">3</span><span>May</span>
+        </div>
+        <div class="date-card" id="btn-d5" onclick="showTab('d5')">
+            <span>Mon</span><span class="day-num">4</span><span>May</span>
+        </div>
+    </div>
+
+    <main class="p-4 max-w-lg mx-auto">
+        
+        <div class="flex mb-6" id="day-header-area">
+            <div class="w-12 flex flex-col items-center pt-2">
+                <div class="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold shadow-lg" id="current-day-circle"><i class="fas fa-flag"></i></div>
+            </div>
+            <div class="flex-1 pl-3">
+                <h2 class="text-xl font-black text-slate-800" id="current-day-text">Preparation</h2>
+                <div class="grid grid-cols-5 gap-2 mt-4" id="action-buttons" style="display: none;">
+                    <button class="action-btn text-blue-600" onclick="openAddModal('flight')"><i class="fas fa-plane"></i></button>
+                    <button class="action-btn text-purple-600" onclick="openAddModal('hotel')"><i class="fas fa-hotel"></i></button>
+                    <button class="action-btn text-amber-500" onclick="openAddModal('food')"><i class="fas fa-utensils"></i></button>
+                    <button class="action-btn text-green-600" onclick="openAddModal('transport')"><i class="fas fa-car"></i></button>
+                    <button class="action-btn text-red-500" onclick="openAddModal('activity')"><i class="fas fa-star"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="pre" class="tab-content space-y-5 active">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 class="font-bold text-slate-700 mb-3"><i class="fas fa-calculator text-teal-500 mr-2"></i> 雙向匯率 (0.21)</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">JPY 日圓</p>
+                        <input type="number" id="jpyV" oninput="calcT()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700" placeholder="¥">
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">TWD 台幣</p>
+                        <input type="number" id="twdV" oninput="calcJ()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700" placeholder="$">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 class="font-bold text-slate-700 mb-4"><i class="fas fa-list-check text-rose-500 mr-2"></i> 行前行李準備清單</h3>
+                <div class="flex mb-4">
+                    <input type="text" id="newChecklist" class="flex-grow p-3 text-sm bg-slate-50 border border-slate-200 rounded-l-xl outline-none" placeholder="輸入新增品項...">
+                    <button onclick="addChecklist()" class="bg-blue-600 text-white px-5 rounded-r-xl font-bold text-sm">新增</button>
+                </div>
+                <div id="checklist-render" class="space-y-1"></div>
+            </div>
+
+            <div class="bg-blue-50 p-4 rounded-2xl border border-blue-200">
+                <h3 class="font-bold text-blue-700 mb-3"><i class="fas fa-info-circle mr-2"></i> 共編說明</h3>
+                <div class="text-sm text-blue-600 space-y-2">
+                    <p>📝 <strong>編輯模式：</strong>點擊右上角「開啟編輯」按鈕</p>
+                    <p>✏️ <strong>直接編輯：</strong>編輯模式下點擊任何文字即可修改</p>
+                    <p>👥 <strong>GitHub共編：</strong>上傳到GitHub後，家人可直接編輯</p>
+                    <p>💾 <strong>儲存分享：</strong>編輯完成後點擊「匯出」按鈕</p>
+                </div>
+            </div>
+
+            <div class="pt-4">
+                <button onclick="exportHTML()" class="w-full py-4 bg-slate-800 text-white rounded-2xl font-bold flex items-center justify-center shadow-lg active:scale-95 transition-transform">
+                    <i class="fas fa-file-export mr-2"></i> 💾 儲存並匯出成新網頁檔案
+                </button>
+                <p class="text-[10px] text-center text-slate-400 mt-3 italic">點擊按鈕可下載包含妳修改內容的全新 HTML，方便傳給家人分享。</p>
+            </div>
+        </div>
+
+        <div id="d1" class="tab-content"><div id="list-d1"></div></div>
+        <div id="d2" class="tab-content"><div id="list-d2"></div></div>
+        <div id="d3" class="tab-content"><div id="list-d3"></div></div>
+        <div id="d4" class="tab-content"><div id="list-d4"></div></div>
+        <div id="d5" class="tab-content"><div id="list-d5"></div></div>
+
+    </main>
+
+    <div id="addModal" class="fixed inset-0 bg-slate-900 bg-opacity-60 flex items-center justify-center z-[100] px-4 backdrop-blur-sm hidden">
+        <div class="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl">
+            <div class="bg-blue-600 px-5 py-4 flex justify-between items-center text-white">
+                <h3 class="font-bold">新增行程項目</h3>
+                <button onclick="closeModal()" class="text-white opacity-80 hover:opacity-100"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <div class="p-5 space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">類型</label>
+                        <select id="modal-type" class="w-full p-2.5 border rounded-xl bg-slate-50 text-sm font-bold outline-none">
+                            <option value="flight">✈️ Flight</option>
+                            <option value="hotel">🏨 Hotel</option>
+                            <option value="food">🍴 Food</option>
+                            <option value="transport">🚆 Transport</option>
+                            <option value="activity">⭐ Activity</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">時間 (排序用)</label>
+                        <input type="time" id="modal-time" class="w-full p-2.5 border rounded-xl bg-slate-50 text-sm font-bold outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">行程標題</label>
+                    <input type="text" id="modal-title" class="w-full p-3 border rounded-xl bg-slate-50 text-sm font-bold outline-none" placeholder="例如: Check in Hotel">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">詳細內容備註</label>
+                    <textarea id="modal-desc" class="w-full p-3 border rounded-xl bg-slate-50 text-sm h-28 placeholder-slate-400 outline-none" placeholder="輸入預約編號、交通細節、餐點內容..."></textarea>
+                </div>
+                <button onclick="saveItem()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-200">確認加入行程</button>
+            </div>
+        </div>
+    </div>
+
+    <script id="app-script">
+        // --- 1. Configuration ---
+        const config = {
+            'flight': { icon: 'fa-plane', label: 'Flight' },
+            'transport': { icon: 'fa-car', label: 'Transport' },
+            'hotel': { icon: 'fa-building', label: 'Hotel' },
+            'food': { icon: 'fa-utensils', label: 'Food' },
+            'activity': { icon: 'fa-star', label: 'Activity' }
+        };
+
+        const dayHeaders = {
+            'd1': { num: '1', text: 'Thursday,<br>April 30' },
+            'd2': { num: '2', text: 'Friday,<br>May 1' },
+            'd3': { num: '3', text: 'Saturday,<br>May 2' },
+            'd4': { num: '4', text: 'Sunday,<br>May 3' },
+            'd5': { num: '5', text: 'Monday,<br>May 4' }
+        };
+
+        // --- 2. Data (從外部JSON檔案載入) ---
+        let itinerary = {};
+        let checklistData = [];
+        let editMode = false;
+
+        // --- 3. Core Functions ---
+        let currentDay = 'pre';
+
+        // 載入資料
+        async function loadData() {
+            try {
+                // 嘗試從外部JSON檔案載入
+                const response = await fetch('nagoya_trip_data.json');
+                if (response.ok) {
+                    const data = await response.json();
+                    itinerary = data.itinerary;
+                    checklistData = data.checklistData;
+                } else {
+                    // 如果找不到外部檔案，使用預設資料
+                    loadDefaultData();
+                }
+            } catch (error) {
+                console.log('載入外部JSON失敗，使用預設資料');
+                loadDefaultData();
+            }
+            
+            // 載入本地儲存的修改
+            loadStorage();
+        }
+
+        function loadDefaultData() {
+            itinerary = {
+                "d1": [
+                    {"type": "flight", "title": "TPE 桃園航站 2 ➡️ NGO 名古屋航站 1", "time": "17:15", "desc": "17:15 - 21:05 ｜ ✈️ 去程航班 (CI 150)\n✈️ 中華航空訂位代號：\n全家（2大2小）：FYBH3Y\n阿嬤：FYKOV6"},
+                    {"type": "transport", "title": "Walk to Hotel", "time": "21:30", "desc": "領完行李後，由連通橋步行約 5-8 minutes分鐘即可抵達。"},
+                    {"type": "hotel", "title": "Check-in Hotel", "time": "22:00", "desc": "入住：機場島飯店（Comfort Hotel ）。\n任務：在便利商店買好隔天早餐，方便抵達後直接休息。"}
+                ],
+                "d2": [
+                    {"type": "transport", "title": "Meitetsu to Nagoya Sta.", "time": "08:30", "desc": "35 mins 車程 | 從機場飯店出發前往名古屋車站"},
+                    {"type": "activity", "title": "Kids Shopping Sprint", "time": "10:00", "desc": "📍 Bic Camera 名古屋駅西店 (玩具/鋼彈) | 10AM-9PM\n📍 JR Gate Tower (Disney/橡子共和國) | 10AM-9PM\n🚨 需在10:30前結束搭車前往金城埠頭！"},
+                    {"type": "transport", "title": "Aonami Line to Kinjofuto", "time": "10:30", "desc": "24 mins 車程 | 名古屋站至金城埠頭站"},
+                    {"type": "activity", "title": "Handicraft Activity", "time": "11:00", "desc": "Maker's Pier 商店街 | 手作活動已經預約完畢了 ✨"},
+                    {"type": "food", "title": "Lunch in Maker's Pier", "time": "12:30", "desc": "避開樂園人潮在此用餐"},
+                    {"type": "activity", "title": "LEGOLAND Hotel Explore", "time": "16:00", "desc": "房間尋寶解保險箱、搭迪斯可電梯、大廳玩樂高池"},
+                    {"type": "activity", "title": "Swimming Pool", "time": "17:30", "desc": "水上遊戲區 Water Play Area (已預約 17:30-18:00)"},
+                    {"type": "food", "title": "Birthday Dinner 🎂", "time": "19:00", "desc": "Bricks Family Restaurant 生日套裝行程"},
+                    {"type": "hotel", "title": "Check in Hotel", "time": "20:30", "desc": "LEGOLAND Japan Hotel (Kingdom房)\n預約編號: 1044829363"}
+                ],
+                "d3": [
+                    {"type": "food", "title": "Hotel Breakfast", "time": "07:30", "desc": "樂高飯店內享用"},
+                    {"type": "transport", "title": "Walk to Park", "time": "08:30", "desc": "5 mins 步行 | 退房寄放行李，步行至樂高樂園門口"},
+                    {"type": "activity", "title": "LEGOLAND Full Day", "time": "09:00", "desc": "住客優先入園 ✨\nAdventure 右下: 11潛水探險✨,12烏賊衝浪(甩尾飛船)🌊,9失落王國探險✨(室內射擊),10甲殼蟲反彈（寶寶版自由落體)\n\nLego city左上: 13消防學院💪,17駕駛學校✨,18海岸巡邏邏總部🌊(輕鬆開船)\n\nKnights kingdom 左上: 20飛龍徒弟(寶寶版雲霄飛車)\n左中: 25凱的空中射擊\n\npirate shores左中:26水花大戰🌊\n\n入口: 1工廠✨,5瞭望塔(休息)\n\n✨必去。🌊濕身。💪耗體力。"},
+                    {"type": "food", "title": "Lunch in LEGOLAND", "time": "11:00", "desc": "積木漢堡 (提早用餐避人潮)"},
+                    {"type": "transport", "title": "Aonami Line to Nagoya", "time": "18:00", "desc": "30 mins 車程 | 領完行李後前往市區"},
+                    {"type": "hotel", "title": "Check in Hotel", "time": "19:00", "desc": "相鐵 FRESA INN 名古屋站櫻通口"},
+                    {"type": "food", "title": "拉麵", "time": "19:00", "desc": "名古屋車站附近找晚餐"}
+                ],
+                "d4": [
+                    {"type": "transport", "title": "Taxi to Osu", "time": "09:30", "desc": "15 mins 車程 | 帶著小孩長輩推薦搭計程車"},
+                    {"type": "activity", "title": "Miwa Shrine", "time": "10:00", "desc": "兔子神社找石像、寫繪馬"},
+                    {"type": "food", "title": "Lunch in Osu", "time": "12:00", "desc": "大須商店街 / 一蘭拉麵"},
+                    {"type": "transport", "title": "Transport to Tokoname", "time": "13:30", "desc": "搭計程車回飯店領行李 ➔ μ-SKY 至機場寄放 ➔ 轉搭名鐵至常滑站"},
+                    {"type": "activity", "title": "Tokoname / Wonder Golf", "time": "16:00", "desc": "招財貓散步道、磁磚博物館、Wonder Golf"},
+                    {"type": "transport", "title": "Meitetsu to Airport", "time": "18:00", "desc": "10 mins 車程 | 從常滑搭車返回機場島"},
+                    {"type": "food", "title": "Dinner in Airport", "time": "18:30", "desc": "機場 4F 美食街或 FLIGHT OF DREAMS"},
+                    {"type": "hotel", "title": "Check in Hotel", "time": "20:00", "desc": "Centrair Hotel (機場島飯店)"}
+                ],
+                "d5": [
+                    {"type": "transport", "title": "Walk to Terminal", "time": "07:30", "desc": "5 mins 步行 | 從機場飯店步行至報到櫃台"},
+                    {"type": "flight", "title": "Flight (NGO - TPE)", "time": "09:55", "desc": "CI 151 (Terminal 1 to Terminal 2)\nSeat: 預約兒童餐 | 托運 23kg / 手提 7kg"}
+                ]
+            };
+            
+            checklistData = [
+                {"text": "機票代號 (全家:FYBH3Y | 嬤:FYKOV6)", "checked": false},
+                {"text": "護照 (全家5人)", "checked": false},
+                {"text": "樂高樂園 5/2 門票 (3大2小)", "checked": false},
+                {"text": "退燒/止痛/過敏 (藥師專業備藥💊)", "checked": false},
+                {"text": "Enid & Ian 慶生驚喜道具 🎈", "checked": false}
+            ];
+        }
+
+        function loadStorage() {
+            const savedItinerary = localStorage.getItem('nagoya_itinerary');
+            const savedChecklist = localStorage.getItem('nagoya_checklist');
+            if(savedItinerary) itinerary = JSON.parse(savedItinerary);
+            if(savedChecklist) checklistData = JSON.parse(savedChecklist);
+        }
+
+        function saveStorage() {
+            localStorage.setItem('nagoya_itinerary', JSON.stringify(itinerary));
+            localStorage.setItem('nagoya_checklist', JSON.stringify(checklistData));
+        }
+
+        function timeToMins(t) { if(!t) return 0; const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+        function formatTime(t) {
+            if(!t) return "";
+            let [h, m] = t.split(':').map(Number);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${m < 10 ? '0'+m : m} ${ampm}`;
+        }
+
+        // 編輯模式功能
+        function toggleEditMode() {
+            editMode = !editMode;
+            const btn = document.getElementById('editModeText');
+            btn.textContent = editMode ? '關閉編輯' : '開啟編輯';
+            
+            if (editMode) {
+                document.body.classList.add('edit-mode');
+                makeEditable();
+            } else {
+                document.body.classList.remove('edit-mode');
+                removeEditable();
+            }
+        }
+
+        function makeEditable() {
+            // 為所有可編輯元素添加編輯功能
+            document.querySelectorAll('.timeline-card h3, .timeline-card .text-slate-600').forEach(el => {
+                el.classList.add('editable');
+                el.contentEditable = true;
+                el.addEventListener('blur', function() {
+                    this.classList.remove('editing');
+                    saveDataChanges();
+                });
+                el.addEventListener('focus', function() {
+                    this.classList.add('editing');
+                });
+            });
+        }
+
+        function removeEditable() {
+            document.querySelectorAll('.editable').forEach(el => {
+                el.classList.remove('editable', 'editing');
+                el.contentEditable = false;
+            });
+        }
+
+        function saveDataChanges() {
+            // 這裡可以實現將編輯後的內容同步回資料結構
+            saveStorage();
+        }
+
+        function renderDay(dayId) {
+            if(dayId === 'pre') return;
+            const container = document.getElementById('list-' + dayId);
+            itinerary[dayId].sort((a, b) => timeToMins(a.time) - timeToMins(b.time));
+
+            container.innerHTML = itinerary[dayId].map((item, idx) => {
+                const c = config[item.type];
+                return `
+                <div class="timeline-card type-${item.type}">
+                    <div class="w-10 flex flex-col items-center text-slate-200 pt-1">
+                        <i class="fas fa-grip-vertical text-[9px] mb-1 opacity-40"></i>
+                        <div class="icon-box"><i class="fas ${c.icon}"></i></div>
+                        ${idx !== itinerary[dayId].length - 1 ? '<div class="w-[2px] h-full bg-slate-100 mt-2"></div>' : ''}
+                    </div>
+                    <div class="flex-1 ml-3">
+                        <div class="flex items-center">
+                            <h3 class="font-bold text-slate-800 text-[15px]">${item.title}</h3>
+                            <span class="tag">${c.label}</span>
+                        </div>
+                        <div class="flex items-center text-slate-400 text-[11px] mt-1 font-bold">
+                            <i class="far fa-clock mr-1"></i> ${formatTime(item.time)}
+                            <button onclick="deleteItem('${dayId}', ${idx})" class="ml-auto text-slate-300 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                        </div>
+                        ${item.desc ? `<div class="text-[13px] text-slate-600 mt-2.5 bg-slate-50 p-3 rounded-xl border border-slate-100 whitespace-pre-wrap leading-relaxed">${item.desc}</div>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+            
+            if (editMode) {
+                makeEditable();
+            }
+        }
+
+        function showTab(dayId) {
+            currentDay = dayId;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.date-card').forEach(el => el.classList.remove('active'));
+            document.getElementById(dayId).classList.add('active');
+            document.getElementById('btn-' + dayId).classList.add('active');
+            
+            const actionArea = document.getElementById('action-buttons');
+            const circle = document.getElementById('current-day-circle');
+            const text = document.getElementById('current-day-text');
+
+            if(dayId === 'pre') {
+                actionArea.style.display = 'none';
+                circle.innerHTML = '<i class="fas fa-flag"></i>';
+                text.innerHTML = 'Preparation';
+                renderChecklist();
+            } else {
+                actionArea.style.display = 'grid';
+                circle.innerText = dayHeaders[dayId].num;
+                text.innerHTML = dayHeaders[dayId].text;
+                renderDay(dayId);
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function openAddModal(type) {
+            document.getElementById('modal-type').value = type;
+            document.getElementById('modal-title').value = '';
+            document.getElementById('modal-desc').value = '';
+            document.getElementById('modal-time').value = '12:00';
+            document.getElementById('addModal').classList.remove('hidden');
+        }
+        function closeModal() { document.getElementById('addModal').classList.add('hidden'); }
+        function saveItem() {
+            const newItem = {
+                type: document.getElementById('modal-type').value,
+                title: document.getElementById('modal-title').value || 'New Activity',
+                time: document.getElementById('modal-time').value,
+                desc: document.getElementById('modal-desc').value
+            };
+            itinerary[currentDay].push(newItem);
+            saveStorage();
+            renderDay(currentDay);
+            closeModal();
+        }
+        function deleteItem(dayId, idx) {
+            if(confirm("確定要移除這個行程點嗎？")) {
+                itinerary[dayId].splice(idx, 1);
+                saveStorage();
+                renderDay(dayId);
+            }
+        }
+
+        // Checklist Logic
+        function renderChecklist() {
+            const container = document.getElementById('checklist-render');
+            container.innerHTML = checklistData.map((item, idx) => `
+                <div class="flex items-center justify-between py-2.5 border-b border-slate-50">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="chk-${idx}" class="w-5 h-5 accent-blue-600 mr-3 rounded" ${item.checked ? 'checked' : ''} onchange="toggleCheck(${idx})">
+                        <label for="chk-${idx}" class="text-sm font-medium ${item.checked ? 'strikethrough' : 'text-slate-700'}">${item.text}</label>
+                    </div>
+                    <button onclick="delChecklist(${idx})" class="text-slate-200 hover:text-red-500 px-2"><i class="fas fa-times"></i></button>
+                </div>
+            `).join('');
+        }
+        function addChecklist() {
+            const val = document.getElementById('newChecklist').value;
+            if(val.trim()) { checklistData.push({ text: val, checked: false }); document.getElementById('newChecklist').value = ''; saveStorage(); renderChecklist(); }
+        }
+        function delChecklist(idx) { checklistData.splice(idx, 1); saveStorage(); renderChecklist(); }
+        function toggleCheck(idx) { checklistData[idx].checked = !checklistData[idx].checked; saveStorage(); renderChecklist(); }
+
+        // Currency Math
+        function calcT() { const j = document.getElementById('jpyV').value; document.getElementById('twdV').value = Math.round(j * 0.21); }
+        function calcJ() { const t = document.getElementById('twdV').value; document.getElementById('jpyV').value = Math.round(t / 0.21); }
+
+        // Export Logic
+        function exportHTML() {
+            let fullHTML = document.documentElement.outerHTML;
+            const currentItineraryStr = JSON.stringify(itinerary, null, 4);
+            const currentChecklistStr = JSON.stringify(checklistData, null, 4);
+            
+            let newHTML = fullHTML.replace(/let itinerary = \{[\s\S]*?\};/, `let itinerary = ${currentItineraryStr};`);
+            newHTML = newHTML.replace(/let checklistData = \[[\s\S]*?\];/, `let checklistData = ${currentChecklistStr};`);
+            
+            const blob = new Blob([newHTML], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Nagoya_Trip_2026_Collaborative.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            alert("匯出成功！新的共編網頁檔案已存入下載資料夾，可以上傳到GitHub與家人共編了。");
+        }
+
+        // 初始化
+        window.onload = async function() {
+            await loadData();
+            renderChecklist();
+            showTab('pre');
+        };
+    </script>
+
+</body></html>
