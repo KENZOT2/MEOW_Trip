@@ -5,7 +5,24 @@
 const SHARED_FOLDER_ID = 'YOUR_SHARED_FOLDER_ID_HERE'; // 請替換為實際的資料夾ID
 
 // 2. 主要的HTML服務
-function doGet() {
+function doGet(e) {
+  // 支援JSONP請求
+  if (e.parameter.action === 'load') {
+    const data = loadData();
+    const callback = e.parameter.callback;
+    
+    if (callback) {
+      // JSONP回應
+      return ContentService.createTextOutput(callback + '(' + JSON.stringify(data) + ')')
+        .setMimeType(ContentService.MimeType.JAVASCRIPT);
+    } else {
+      // 普通JSON回應
+      return ContentService.createTextOutput(JSON.stringify(data))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+  }
+  
+  // 預設HTML頁面
   return HtmlService.createHtmlOutput(`
     <!DOCTYPE html>
     <html>
