@@ -6,20 +6,33 @@ const SPREADSHEET_ID = '1Iqis5KA0yxV6WIz6kTDAI1-GBUHirebzzM54_s1Ppqk'; // Google
 
 // 2. 主要的HTML服務
 function doGet(e) {
-  // 支援JSONP請求
-  if (e.parameter.action === 'load') {
-    const data = loadData();
-    const callback = e.parameter.callback;
-    
-    if (callback) {
-      // JSONP回應
-      return ContentService.createTextOutput(callback + '(' + JSON.stringify(data) + ')')
-        .setMimeType(ContentService.MimeType.JAVASCRIPT);
-    } else {
-      // 普通JSON回應
-      return ContentService.createTextOutput(JSON.stringify(data))
-        .setMimeType(ContentService.MimeType.JSON);
+  try {
+    // 確保e存在
+    if (!e) {
+      e = { parameter: {} };
     }
+    
+    // 支援JSONP請求
+    if (e.parameter.action === 'load') {
+      const data = loadData();
+      const callback = e.parameter.callback;
+      
+      if (callback) {
+        // JSONP回應
+        return ContentService.createTextOutput(callback + '(' + JSON.stringify(data) + ')')
+          .setMimeType(ContentService.MimeType.JAVASCRIPT);
+      } else {
+        // 普通JSON回應
+        return ContentService.createTextOutput(JSON.stringify(data))
+          .setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+  } catch (error) {
+    console.error('doGet error:', error);
+    return ContentService.createTextOutput(JSON.stringify({
+      success: false,
+      error: error.toString()
+    })).setMimeType(ContentService.MimeType.JSON);
   }
   
   // 預設HTML頁面
@@ -32,7 +45,7 @@ function doGet(e) {
     </head>
     <body>
       <h1>Nagoya Trip API 服務</h1>
-      <p>這是Google Drive後端API服務</p>
+      <p>這是Google試算表後端API服務</p>
       <p>請將此網址加入你的網頁中</p>
       <script>
         // 顯示當前網址供複製
@@ -177,6 +190,14 @@ function loadData() {
 // 5. 處理POST請求
 function doPost(e) {
   try {
+    // 確保e存在
+    if (!e || !e.postData) {
+      return ContentService.createTextOutput(JSON.stringify({
+        success: false,
+        error: 'Invalid request'
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+    
     const params = JSON.parse(e.postData.contents);
     
     switch(params.action) {
