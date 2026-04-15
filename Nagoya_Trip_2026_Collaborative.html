@@ -133,14 +133,17 @@
             </div>
 
             <div class="pt-4 space-y-3">
+                <button onclick="saveToGoogleDrive()" class="w-full py-3 bg-blue-600 text-white rounded-2xl font-bold flex items-center justify-center shadow-lg active:scale-95 transition-transform">
+                    <i class="fab fa-google-drive mr-2"></i> 📤 儲存到Google Drive
+                </button>
                 <button onclick="downloadJSON()" class="w-full py-3 bg-green-600 text-white rounded-2xl font-bold flex items-center justify-center shadow-lg active:scale-95 transition-transform">
-                    <i class="fas fa-download mr-2"></i> 📄 下載更新後的JSON檔案
+                    <i class="fas fa-download mr-2"></i> 📄 下載JSON檔案
                 </button>
                 <button onclick="exportHTML()" class="w-full py-3 bg-slate-800 text-white rounded-2xl font-bold flex items-center justify-center shadow-lg active:scale-95 transition-transform">
-                    <i class="fas fa-file-export mr-2"></i> 💾 儲存並匯出成新網頁檔案
+                    <i class="fas fa-file-export mr-2"></i> 💾 匯出HTML檔案
                 </button>
                 <p class="text-[10px] text-center text-slate-400 mt-2 italic">
-                    💡 網頁編輯模式會自動更新JSON資料，點擊「下載JSON」可取得最新版本上傳到GitHub
+                    💡 Google Drive整合需先設定，請參考桌面說明文件
                 </p>
             </div>
         </div>
@@ -211,26 +214,100 @@
         let itinerary = {};
         let checklistData = [];
         let editMode = false;
+        let googleDriveEnabled = false;
+        const GOOGLE_APPS_SCRIPT_URL = 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE'; // 請替換為實際URL
 
         // --- 3. Core Functions ---
         let currentDay = 'pre';
 
-        // 載入資料
-        async function loadData() {
+        // Google Drive 功能
+        async function loadFromGoogleDrive() {
+            if (!GOOGLE_APPS_SCRIPT_URL || GOOGLE_APPS_SCRIPT_URL === 'YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+                console.log('Google Drive URL未設定');
+                return false;
+            }
+            
             try {
-                // 嘗試從外部JSON檔案載入
-                const response = await fetch('nagoya_trip_data.json');
+                const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'load'
+                    })
+                });
+                
                 if (response.ok) {
-                    const data = await response.json();
-                    itinerary = data.itinerary;
-                    checklistData = data.checklistData;
-                } else {
-                    // 如果找不到外部檔案，使用預設資料
-                    loadDefaultData();
+                    const result = await response.json();
+                    if (result.success) {
+                        itinerary = result.data.itinerary;
+                        checklistData = result.data.checklistData;
+                        googleDriveEnabled = true;
+                        showNotification('已從Google Drive載入資料！');
+                        return true;
+                    }
                 }
             } catch (error) {
-                console.log('載入外部JSON失敗，使用預設資料');
-                loadDefaultData();
+                console.log('Google Drive載入失敗:', error);
+            }
+            return false;
+        }
+
+        async function saveToGoogleDrive() {
+            if (!googleDriveEnabled) {
+                showNotification('請先設定Google Drive整合');
+                return false;
+            }
+            
+            try {
+                const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'save',
+                        data: { itinerary, checklistData }
+                    })
+                });
+                
+                if (response.ok) {
+                    const result = await response.json();
+                    if (result.success) {
+                        showNotification('資料已儲存到Google Drive！');
+                        return true;
+                    } else {
+                        showNotification('儲存失敗: ' + result.message);
+                    }
+                }
+            } catch (error) {
+                showNotification('Google Drive儲存失敗: ' + error.message);
+            }
+            return false;
+        }
+
+        // 載入資料
+        async function loadData() {
+            // 先嘗試從Google Drive載入
+            const googleDriveLoaded = await loadFromGoogleDrive();
+            
+            if (!googleDriveLoaded) {
+                try {
+                    // 嘗試從外部JSON檔案載入
+                    const response = await fetch('nagoya_trip_data.json');
+                    if (response.ok) {
+                        const data = await response.json();
+                        itinerary = data.itinerary;
+                        checklistData = data.checklistData;
+                    } else {
+                        // 如果找不到外部檔案，使用預設資料
+                        loadDefaultData();
+                    }
+                } catch (error) {
+                    console.log('載入外部JSON失敗，使用預設資料');
+                    loadDefaultData();
+                }
             }
             
             // 載入本地儲存的修改
