@@ -61,8 +61,14 @@ function saveData(data) {
   try {
     const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
     
+    // 確保有第一個工作表
+    let sheet = spreadsheet.getSheets()[0];
+    if (!sheet) {
+      sheet = spreadsheet.insertSheet('行程資料');
+    }
+    sheet.setName('行程資料');
+    
     // 清空現有資料
-    const sheet = spreadsheet.getSheets()[0];
     sheet.clear();
     
     // 寫入標題
@@ -86,25 +92,20 @@ function saveData(data) {
     }
     
     // 寫入檢查清單到第二個工作表
-    let checklistSheet;
-    try {
-      checklistSheet = spreadsheet.getSheetByName('Checklist');
-      if (!checklistSheet) {
-        checklistSheet = spreadsheet.insertSheet('Checklist');
-      }
-      checklistSheet.clear();
-      checklistSheet.getRange(1, 1).setValue('項目');
-      checklistSheet.getRange(1, 2).setValue('已完成');
-      
-      row = 2;
-      data.checklistData.forEach(item => {
-        checklistSheet.getRange(row, 1).setValue(item.text);
-        checklistSheet.getRange(row, 2).setValue(item.checked);
-        row++;
-      });
-    } catch(e) {
-      console.log('Checklist sheet error:', e);
+    let checklistSheet = spreadsheet.getSheetByName('Checklist');
+    if (!checklistSheet) {
+      checklistSheet = spreadsheet.insertSheet('Checklist');
     }
+    checklistSheet.clear();
+    checklistSheet.getRange(1, 1).setValue('項目');
+    checklistSheet.getRange(1, 2).setValue('已完成');
+    
+    row = 2;
+    data.checklistData.forEach(item => {
+      checklistSheet.getRange(row, 1).setValue(item.text);
+      checklistSheet.getRange(row, 2).setValue(item.checked);
+      row++;
+    });
     
     return {
       success: true,
@@ -126,6 +127,20 @@ function loadData() {
   try {
     const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
     const sheet = spreadsheet.getSheets()[0];
+    
+    // 檢查是否有資料
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 1) {
+      // 沒有資料，回傳預設空資料
+      return {
+        success: true,
+        data: {
+          itinerary: {},
+          checklistData: []
+        },
+        message: '試算表無資料，使用空資料'
+      };
+    }
     
     const data = sheet.getDataRange().getValues();
     const itinerary = {};
@@ -153,20 +168,16 @@ function loadData() {
     
     // 讀取檢查清單
     let checklistData = [];
-    try {
-      const checklistSheet = spreadsheet.getSheetByName('Checklist');
-      if (checklistSheet) {
-        const checklistDataRange = checklistSheet.getDataRange().getValues();
-        for (let i = 1; i < checklistDataRange.length; i++) {
-          const row = checklistDataRange[i];
-          checklistData.push({
-            text: row[0],
-            checked: row[1] === true || row[1] === 'TRUE'
-          });
-        }
+    const checklistSheet = spreadsheet.getSheetByName('Checklist');
+    if (checklistSheet && checklistSheet.getLastRow() > 1) {
+      const checklistDataRange = checklistSheet.getDataRange().getValues();
+      for (let i = 1; i < checklistDataRange.length; i++) {
+        const row = checklistDataRange[i];
+        checklistData.push({
+          text: row[0],
+          checked: row[1] === true || row[1] === 'TRUE'
+        });
       }
-    } catch(e) {
-      console.log('Checklist load error:', e);
     }
     
     return {
