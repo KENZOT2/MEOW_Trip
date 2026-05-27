@@ -69,6 +69,9 @@
             <span id="lastSyncTime" class="text-[10px] opacity-80 font-medium tracking-tight ml-8">雲端確認中...</span>
         </div>
         <div class="flex gap-1.5">
+            <button onclick="if(confirm('警告：這將會把網頁內的「預設曼谷行程」強制寫入您的 Google 雲端試算表中！\n如果您試算表內已經有資料，將會全部被洗掉喔！\n確定要繼續嗎？')){loadDefaultData();saveToGoogleSheets();}" class="bg-red-500 border border-red-400 text-white px-2 py-1.5 rounded-lg text-xs font-bold active:scale-95 transition shadow-sm flex items-center" title="強制將預設行程寫入雲端">
+                <i class="fas fa-magic mr-1"></i>載入預設
+            </button>
             <button onclick="refreshData()" class="bg-indigo-500 border border-indigo-400 text-white px-2 py-1.5 rounded-lg text-xs font-bold active:scale-95 transition shadow-sm flex items-center">
                 <i class="fas fa-sync-alt mr-1"></i>重整
             </button>
