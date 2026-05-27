@@ -51,32 +51,57 @@
     </style>
 </head>
 <body class="pb-10">
+    <!-- 讀取畫面 Loading Screen -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-slate-900 bg-opacity-80 flex flex-col items-center justify-center z-[100] backdrop-blur-sm transition-opacity duration-300">
+        <div class="bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center min-w-[220px]">
+            <i class="fas fa-spinner fa-spin text-blue-500 text-4xl mb-3"></i>
+            <span id="loadingText" class="text-slate-700 font-bold text-sm tracking-widest uppercase">載入資料中...</span>
+        </div>
+    </div>
 
-    <div class="top-bar px-4 py-4 flex items-center justify-center sticky top-0 z-50 shadow-md">
-        <span class="font-bold text-lg tracking-widest uppercase">Nagoya Birthday Trip</span>
-        <button onclick="toggleEditMode()" class="ml-auto bg-green-500 text-white px-3 py-1 rounded-lg text-sm font-bold hover:bg-green-600 transition">
-            <i class="fas fa-edit mr-1"></i> <span id="editModeText">開啟編輯</span>
-        </button>
+    <div class="top-bar px-4 py-3 flex justify-between items-center sticky top-0 z-50 shadow-md gap-1">
+        <div class="flex flex-col items-start mr-auto truncate">
+            <span class="font-bold text-sm tracking-widest uppercase truncate">Nagoya Trip</span>
+            <span id="lastSyncTime" class="text-[10px] opacity-80 font-medium tracking-tight">雲端確認中...</span>
+        </div>
+        <div class="flex gap-1.5">
+            <button onclick="refreshData()" class="bg-indigo-500 border border-indigo-400 text-white px-2 py-1.5 rounded-lg text-xs font-bold active:scale-95 transition shadow-sm flex items-center">
+                <i class="fas fa-sync-alt mr-1"></i>重整
+            </button>
+            <button onclick="saveToGoogleSheets()" class="relative bg-blue-600 border border-blue-400 text-white px-2 py-1.5 rounded-lg text-xs font-bold active:scale-95 transition shadow-sm flex items-center">
+                <i class="fas fa-cloud-upload-alt mr-1"></i><span id="saveBtnText">存雲端</span>
+                <span id="unsavedDot" class="hidden absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-500 border-2 border-white"></span>
+                </span>
+            </button>
+            <button onclick="toggleEditMode()" class="bg-green-500 border border-green-400 text-white px-2 py-1.5 rounded-lg text-xs font-bold active:scale-95 transition shadow-sm flex items-center">
+                <i class="fas fa-edit mr-1"></i><span id="editModeText">編輯</span>
+            </button>
+        </div>
     </div>
 
     <div class="bg-slate-50 px-4 py-5 border-b flex space-x-3 overflow-x-auto no-scrollbar">
         <div class="date-card active" id="btn-pre" onclick="showTab('pre')">
-            <span class="font-black text-[10px] mb-1">PRE</span><span class="day-num"><i class="fas fa-tasks"></i></span><span>行前準備</span>
+            <span class="text-[10px] text-slate-500 font-bold mb-0.5">PRE</span><span class="day-num"><i class="fas fa-tasks"></i></span><span class="text-[10px] text-slate-500">行前</span>
         </div>
         <div class="date-card" id="btn-d1" onclick="showTab('d1')">
-            <span>Thu</span><span class="day-num">30</span><span>Apr</span>
+            <span class="text-[10px] text-slate-500 font-bold mb-0.5">第1天</span><span class="text-[15px] font-black my-0.5">4/30</span><span class="text-[10px] text-slate-500">週四</span>
         </div>
         <div class="date-card" id="btn-d2" onclick="showTab('d2')">
-            <span>Fri</span><span class="day-num">1</span><span>May</span>
+            <span class="text-[10px] text-slate-500 font-bold mb-0.5">第2天</span><span class="text-[15px] font-black my-0.5">5/1</span><span class="text-[10px] text-slate-500">週五</span>
         </div>
         <div class="date-card" id="btn-d3" onclick="showTab('d3')">
-            <span>Sat</span><span class="day-num">2</span><span>May</span>
+            <span class="text-[10px] text-slate-500 font-bold mb-0.5">第3天</span><span class="text-[15px] font-black my-0.5">5/2</span><span class="text-[10px] text-slate-500">週六</span>
         </div>
         <div class="date-card" id="btn-d4" onclick="showTab('d4')">
-            <span>Sun</span><span class="day-num">3</span><span>May</span>
+            <span class="text-[10px] text-slate-500 font-bold mb-0.5">第4天</span><span class="text-[15px] font-black my-0.5">5/3</span><span class="text-[10px] text-slate-500">週日</span>
         </div>
         <div class="date-card" id="btn-d5" onclick="showTab('d5')">
-            <span>Mon</span><span class="day-num">4</span><span>May</span>
+            <span class="text-[10px] text-slate-500 font-bold mb-0.5">第5天</span><span class="text-[15px] font-black my-0.5">5/4</span><span class="text-[10px] text-slate-500">週一</span>
+        </div>
+        <div class="date-card" id="btn-acc" onclick="showTab('acc')">
+            <span class="text-[10px] text-slate-500 font-bold mb-0.5">ACC</span><span class="day-num"><i class="fas fa-yen-sign"></i></span><span class="text-[10px] text-slate-500">記帳</span>
         </div>
     </div>
 
@@ -127,18 +152,14 @@
                 <div class="text-sm text-blue-600 space-y-2">
                     <p>📝 <strong>編輯模式：</strong>點擊右上角「開啟編輯」按鈕</p>
                     <p>✏️ <strong>直接編輯：</strong>編輯模式下點擊任何文字即可修改</p>
-                    <p>👥 <strong>GitHub共編：</strong>上傳到GitHub後，家人可直接編輯</p>
-                    <p>💾 <strong>儲存分享：</strong>編輯完成後點擊「匯出」按鈕</p>
+                    <p>👥 <strong>儲存：</strong>點擊右上角「存雲端」寫入 GOOGLE 試算表
+                        <a href="https://docs.google.com/spreadsheets/d/1Iqis5KA0yxV6WIz6kTDAI1-GBUHirebzzM54_s1Ppqk/edit?gid=0#gid=0" target="_blank" class="block ml-6 mt-1 text-blue-500 hover:text-blue-700 underline text-xs break-all"><i class="fas fa-external-link-alt mr-1"></i>查看後台試算表</a>
+                    </p>
+                    <p>💾 <strong>分享：</strong>完成後點擊「匯出HTML」按鈕</p>
                 </div>
             </div>
 
             <div class="pt-4 space-y-3">
-                <button onclick="saveToGoogleSheets()" class="w-full py-3 bg-green-600 text-white rounded-2xl font-bold flex items-center justify-center shadow-lg active:scale-95 transition-transform">
-                    <i class="fas fa-table mr-2"></i> 📤 儲存到Google試算表
-                </button>
-                <button onclick="downloadJSON()" class="w-full py-3 bg-blue-600 text-white rounded-2xl font-bold flex items-center justify-center shadow-lg active:scale-95 transition-transform">
-                    <i class="fas fa-download mr-2"></i> 📄 下載JSON檔案
-                </button>
                 <button onclick="exportHTML()" class="w-full py-3 bg-slate-800 text-white rounded-2xl font-bold flex items-center justify-center shadow-lg active:scale-95 transition-transform">
                     <i class="fas fa-file-export mr-2"></i> 💾 匯出HTML檔案
                 </button>
@@ -154,15 +175,64 @@
         <div id="d4" class="tab-content"><div id="list-d4"></div></div>
         <div id="d5" class="tab-content"><div id="list-d5"></div></div>
 
+        <!-- Accounting Tab -->
+        <div id="acc" class="tab-content space-y-5">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 class="font-bold text-slate-700 mb-3"><i class="fas fa-calculator text-teal-500 mr-2"></i> 雙向匯率 (0.21)</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">JPY 日圓</p>
+                        <input type="number" id="accJpyV" oninput="calcT_acc()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700" placeholder="¥">
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">TWD 台幣</p>
+                        <input type="number" id="accTwdV" oninput="calcJ_acc()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700" placeholder="$">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 class="font-bold text-slate-700 mb-4"><i class="fas fa-file-invoice-dollar text-orange-500 mr-2"></i> 新增記帳</h3>
+                <div class="space-y-3 mb-4">
+                    <div>
+                        <input type="text" id="newAccName" class="w-full p-3 text-sm bg-slate-50 border border-slate-200 rounded-xl outline-none" placeholder="1. 購買的名稱 (如：吉卜力扭蛋)">
+                    </div>
+                    <div>
+                        <select id="newAccPayer" class="w-full p-3 text-sm bg-slate-50 border border-slate-200 rounded-xl outline-none text-slate-600 font-bold">
+                            <option value="凱翔" selected>凱翔</option>
+                            <option value="佩君">佩君</option>
+                            <option value="阿嬤">阿嬤</option>
+                            <option value="伊恩">伊恩</option>
+                            <option value="依妮">依妮</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-2 items-center">
+                        <input type="number" id="newAccJpy" oninput="document.getElementById('newAccTwd').value = Math.round(this.value * 0.21)" class="w-1/2 p-3 text-sm bg-slate-50 border border-slate-200 rounded-xl outline-none" placeholder="日幣(¥)">
+                        <i class="fas fa-exchange-alt text-slate-300 text-xs text-center"></i>
+                        <input type="number" id="newAccTwd" oninput="document.getElementById('newAccJpy').value = Math.round(this.value / 0.21)" class="w-1/2 p-3 text-sm bg-slate-50 border border-slate-200 rounded-xl outline-none" placeholder="台幣($)">
+                    </div>
+                    <button onclick="addAccounting()" class="w-full bg-orange-500 text-white p-3 rounded-xl font-bold text-sm shadow-md active:scale-95 transition-transform mt-2"><i class="fas fa-plus mr-1"></i> 新增帳目</button>
+                </div>
+                <!-- 帳目列表 -->
+                <div id="accounting-render" class="space-y-2 mt-4 pt-4 border-t border-slate-100"></div>
+                <!-- 總計區塊 -->
+                <div class="mt-4 pt-4 border-t border-slate-200 flex justify-between items-center px-1">
+                    <span class="font-bold text-slate-500">總花費</span>
+                    <span id="acc-total" class="font-black text-xl text-orange-600">¥0</span>
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <div id="addModal" class="fixed inset-0 bg-slate-900 bg-opacity-60 flex items-center justify-center z-[100] px-4 backdrop-blur-sm hidden">
         <div class="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl">
             <div class="bg-blue-600 px-5 py-4 flex justify-between items-center text-white">
-                <h3 class="font-bold">新增行程項目</h3>
+                <h3 class="font-bold" id="modal-title-text">新增行程項目</h3>
                 <button onclick="closeModal()" class="text-white opacity-80 hover:opacity-100"><i class="fas fa-times text-lg"></i></button>
             </div>
             <div class="p-5 space-y-4">
+                <input type="hidden" id="modal-edit-idx" value="">
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">類型</label>
@@ -207,14 +277,17 @@
             'd2': { num: '2', text: 'Friday,<br>May 1' },
             'd3': { num: '3', text: 'Saturday,<br>May 2' },
             'd4': { num: '4', text: 'Sunday,<br>May 3' },
-            'd5': { num: '5', text: 'Monday,<br>May 4' }
+            'd5': { num: '5', text: 'Monday,<br>May 4' },
+            'acc': { num: '<i class="fas fa-yen-sign"></i>', text: 'Expense Tracker' }
         };
 
         // --- 2. Data (從外部JSON檔案載入) ---
         let itinerary = {};
         let checklistData = [];
+        let accountingData = [];
         let editMode = false;
         let googleSheetsEnabled = false;
+        let autoSaveTimer = null;
         const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyakqgwA4BUhl3uflYSOQU1dSERuNlUQuzKtIYPblJMQPkAOSMv-XrOQtL0QkKmvwabcA/exec'; // Google Apps Script URL
 
         // --- 3. Core Functions ---
@@ -228,8 +301,8 @@
             }
             
             try {
-                // 使用GET請求載入資料
-                const loadUrl = GOOGLE_APPS_SCRIPT_URL + '?action=load&callback=handleGoogleSheetsResponse';
+                // 使用GET請求載入資料，加入時間戳記防止瀏覽器快取舊資料
+                const loadUrl = GOOGLE_APPS_SCRIPT_URL + '?action=load&callback=handleGoogleSheetsResponse&t=' + new Date().getTime();
                 
                 // 創建script標籤來避免CORS問題
                 return new Promise((resolve) => {
@@ -237,7 +310,16 @@
                         if (data && data.success) {
                             itinerary = data.data.itinerary;
                             checklistData = data.data.checklistData;
+                            accountingData = data.data.accountingData || [];
                             googleSheetsEnabled = true;
+                            
+                            // 從雲端資料讀取最後更新時間
+                            if (data.data.lastUpdated) {
+                                updateSyncTimeDisplay(data.data.lastUpdated);
+                            } else {
+                                updateSyncTimeDisplay(); // 預設為現在
+                            }
+                            
                             showNotification('已從Google試算表載入資料！');
                             resolve(true);
                         } else {
@@ -265,17 +347,49 @@
             }
         }
 
-        async function saveToGoogleSheets() {
+        async function saveToGoogleSheets(isAutoSave = false) {
             if (!GOOGLE_APPS_SCRIPT_URL) {
                 showNotification('Google Sheets URL未設定');
                 return false;
             }
             
+            const overlay = document.getElementById('loadingOverlay');
+            const loadText = document.getElementById('loadingText');
+            
+            if (!isAutoSave) {
+                loadText.textContent = "儲存至雲端中...";
+                overlay.style.display = 'flex';
+                overlay.style.opacity = '1';
+            } else {
+                // 自動存檔時在按鈕上顯示微小提示或改變顏色
+                const saveBtn = document.querySelector('button[onclick="saveToGoogleSheets()"]');
+                const saveText = document.getElementById('saveBtnText');
+                saveBtn.classList.add('animate-pulse');
+                if (saveText) saveText.innerText = '自動存檔...';
+            }
+            
             try {
+                // 產生目前的時間戳記 (符合使用者要求的格式)
+                const now = new Date();
+                const timeStr = now.toLocaleString('zh-TW', { 
+                    year: 'numeric', 
+                    month: 'numeric', 
+                    day: 'numeric', 
+                    hour: 'numeric', 
+                    minute: 'numeric', 
+                    second: 'numeric',
+                    hour12: true 
+                });
+
                 // 使用表單提交方式避免CORS問題
                 const formData = new FormData();
                 formData.append('action', 'save');
-                formData.append('data', JSON.stringify({ itinerary, checklistData }));
+                formData.append('data', JSON.stringify({ 
+                    itinerary, 
+                    checklistData, 
+                    accountingData,
+                    lastUpdated: timeStr // 將時間戳記一起存入雲端
+                }));
                 
                 const response = await fetch(GOOGLE_APPS_SCRIPT_URL, {
                     method: 'POST',
@@ -283,13 +397,89 @@
                     mode: 'no-cors'
                 });
                 
-                // 由於no-cors模式，我們假設成功
-                showNotification('資料已儲存到Google試算表！');
-                return true;
+                if (!isAutoSave) await new Promise(r => setTimeout(r, 800)); // 增加儲存體感時間
+                
+                document.getElementById('unsavedDot').classList.add('hidden');
+                updateSyncTimeDisplay(timeStr);
+                
+                if (!isAutoSave) {
+                    showNotification('資料已儲存到Google試算表！');
+                } else {
+                    const saveBtn = document.querySelector('button[onclick="saveToGoogleSheets()"]');
+                    const saveText = document.getElementById('saveBtnText');
+                    saveBtn.classList.remove('animate-pulse');
+                    if (saveText) saveText.innerText = '存雲端';
+                }
             } catch (error) {
-                showNotification('Google試算表儲存失敗: ' + error.message);
-                return false;
+                if (!isAutoSave) showNotification('Google試算表儲存失敗: ' + error.message);
+                console.error('Save failed:', error);
             }
+            
+            if (!isAutoSave) {
+                overlay.style.opacity = '0';
+                setTimeout(() => { 
+                    overlay.style.display = 'none'; 
+                    loadText.textContent = "載入資料中..."; 
+                }, 300);
+            }
+            return true;
+        }
+
+        function updateSyncTimeDisplay(timeStr) {
+            if (!timeStr) {
+                const now = new Date();
+                timeStr = now.toLocaleString('zh-TW', { 
+                    year: 'numeric', 
+                    month: 'numeric', 
+                    day: 'numeric', 
+                    hour: 'numeric', 
+                    minute: 'numeric', 
+                    second: 'numeric',
+                    hour12: true 
+                });
+            }
+            
+            // 依然存入 localStorage 是為了斷網時參考，但 UI 優先權交給雲端
+            localStorage.setItem('nagoya_last_sync', timeStr);
+            const displayEl = document.getElementById('lastSyncTime');
+            if (displayEl) {
+                displayEl.innerText = '雲端同步：' + timeStr;
+                displayEl.classList.add('text-green-400');
+                setTimeout(() => displayEl.classList.remove('text-green-400'), 2000);
+            }
+        }
+
+        // 強制從雲端重整資料
+        async function refreshData() {
+            if(!document.getElementById('unsavedDot').classList.contains('hidden')) {
+                if(!confirm("您有未儲存的變更，確定要放棄這些變更並從雲端重整嗎？")) return;
+            }
+            
+            const overlay = document.getElementById('loadingOverlay');
+            const loadText = document.getElementById('loadingText');
+            overlay.style.display = 'flex';
+            setTimeout(() => overlay.style.opacity = '1', 10);
+            loadText.textContent = "從雲端下載最新資料...";
+            
+            const success = await loadFromGoogleSheets();
+            if(success) {
+                // 若成功載入雲端資料，清空本地暫存以確保顯示最新狀態
+                localStorage.removeItem('nagoya_itinerary');
+                localStorage.removeItem('nagoya_checklist');
+                localStorage.removeItem('nagoya_accounting');
+                document.getElementById('unsavedDot').classList.add('hidden');
+                showNotification('已從雲端同步最新資料！');
+            } else {
+                showNotification('重整失敗，請檢查網路狀態或稍後再試！');
+            }
+            
+            overlay.style.opacity = '0';
+            setTimeout(() => { 
+                overlay.style.display = 'none';
+                loadText.textContent = "載入資料中..."; 
+            }, 300);
+            
+            showTab(currentDay); // 重新渲染當前畫面
         }
 
         // 載入資料
@@ -305,6 +495,7 @@
                         const data = await response.json();
                         itinerary = data.itinerary;
                         checklistData = data.checklistData;
+                        if(data.accountingData) accountingData = data.accountingData;
                     } else {
                         // 如果找不到外部檔案，使用預設資料
                         loadDefaultData();
@@ -313,10 +504,15 @@
                     console.log('載入外部JSON失敗，使用預設資料');
                     loadDefaultData();
                 }
+                
+                // 只有在雲端載入失敗時，才載入本地暫存的修改 (避免舊暫存蓋掉新的雲端資料)
+                loadStorage();
+            } else {
+                // 如果雲端載入成功，代表雲端是最新版本，此時清空本地舊的暫存
+                localStorage.removeItem('nagoya_itinerary');
+                localStorage.removeItem('nagoya_checklist');
+                localStorage.removeItem('nagoya_accounting');
             }
-            
-            // 載入本地儲存的修改
-            loadStorage();
         }
 
         function loadDefaultData() {
@@ -374,13 +570,23 @@
         function loadStorage() {
             const savedItinerary = localStorage.getItem('nagoya_itinerary');
             const savedChecklist = localStorage.getItem('nagoya_checklist');
+            const savedAccounting = localStorage.getItem('nagoya_accounting');
             if(savedItinerary) itinerary = JSON.parse(savedItinerary);
             if(savedChecklist) checklistData = JSON.parse(savedChecklist);
+            if(savedAccounting) accountingData = JSON.parse(savedAccounting);
         }
 
         function saveStorage() {
             localStorage.setItem('nagoya_itinerary', JSON.stringify(itinerary));
             localStorage.setItem('nagoya_checklist', JSON.stringify(checklistData));
+            localStorage.setItem('nagoya_accounting', JSON.stringify(accountingData));
+            document.getElementById('unsavedDot').classList.remove('hidden');
+            
+            // 觸發 3 秒自動存檔
+            if (autoSaveTimer) clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(() => {
+                saveToGoogleSheets(true);
+            }, 3000);
         }
 
         function timeToMins(t) { if(!t) return 0; const [h, m] = t.split(':').map(Number); return h * 60 + m; }
@@ -451,7 +657,7 @@
             });
             
             saveStorage();
-            showNotification('編輯已儲存到JSON資料！');
+            showNotification('行程編輯成功！記得右上角存雲端喔！');
         }
 
         function renderDay(dayId) {
@@ -475,7 +681,10 @@
                         </div>
                         <div class="flex items-center text-slate-400 text-[11px] mt-1 font-bold">
                             <i class="far fa-clock mr-1"></i> ${formatTime(item.time)}
-                            <button onclick="deleteItem('${dayId}', ${idx})" class="ml-auto text-slate-300 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                            <div class="ml-auto flex gap-3 text-sm">
+                                <button onclick="editItem('${dayId}', ${idx})" class="text-blue-400 hover:text-blue-600"><i class="fas fa-edit"></i></button>
+                                <button onclick="deleteItem('${dayId}', ${idx})" class="text-slate-300 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                            </div>
                         </div>
                         ${item.desc ? `<div class="text-[13px] text-slate-600 mt-2.5 bg-slate-50 p-3 rounded-xl border border-slate-100 whitespace-pre-wrap leading-relaxed">${item.desc}</div>` : ''}
                     </div>
@@ -503,6 +712,11 @@
                 circle.innerHTML = '<i class="fas fa-flag"></i>';
                 text.innerHTML = 'Preparation';
                 renderChecklist();
+            } else if (dayId === 'acc') {
+                actionArea.style.display = 'none';
+                circle.innerHTML = dayHeaders[dayId].num;
+                text.innerHTML = dayHeaders[dayId].text;
+                renderAccounting();
             } else {
                 actionArea.style.display = 'grid';
                 circle.innerText = dayHeaders[dayId].num;
@@ -517,28 +731,110 @@
             document.getElementById('modal-title').value = '';
             document.getElementById('modal-desc').value = '';
             document.getElementById('modal-time').value = '12:00';
+            document.getElementById('modal-edit-idx').value = '';
+            document.getElementById('modal-title-text').innerText = '新增行程項目';
+            document.getElementById('addModal').classList.remove('hidden');
+        }
+        function editItem(dayId, idx) {
+            const item = itinerary[dayId][idx];
+            document.getElementById('modal-type').value = item.type;
+            document.getElementById('modal-title').value = item.title;
+            document.getElementById('modal-desc').value = item.desc || '';
+            document.getElementById('modal-time').value = item.time;
+            document.getElementById('modal-edit-idx').value = idx;
+            document.getElementById('modal-title-text').innerText = '編輯行程項目';
             document.getElementById('addModal').classList.remove('hidden');
         }
         function closeModal() { document.getElementById('addModal').classList.add('hidden'); }
         function saveItem() {
-            const newItem = {
-                type: document.getElementById('modal-type').value,
-                title: document.getElementById('modal-title').value || 'New Activity',
-                time: document.getElementById('modal-time').value,
-                desc: document.getElementById('modal-desc').value
-            };
-            itinerary[currentDay].push(newItem);
+            const type = document.getElementById('modal-type').value;
+            const title = document.getElementById('modal-title').value || 'New Activity';
+            const time = document.getElementById('modal-time').value || '12:00';
+            const desc = document.getElementById('modal-desc').value;
+            const editIdx = document.getElementById('modal-edit-idx').value;
+
+            if (editIdx !== '') {
+                itinerary[currentDay][editIdx] = { type, title, time, desc };
+                document.getElementById('modal-edit-idx').value = '';
+            } else {
+                itinerary[currentDay].push({ type, title, time, desc });
+            }
+            
             saveStorage();
             renderDay(currentDay);
             closeModal();
+            showNotification(editIdx !== '' ? '行程修改成功！記得存雲端喔！' : '新增行程成功！記得點選右上角存雲端喔！');
         }
         function deleteItem(dayId, idx) {
             if(confirm("確定要移除這個行程點嗎？")) {
                 itinerary[dayId].splice(idx, 1);
                 saveStorage();
                 renderDay(dayId);
+                showNotification('已刪除！記得點選右上角存雲端喔！');
             }
         }
+
+        // Accounting Logic
+        function renderAccounting() {
+            const container = document.getElementById('accounting-render');
+            let totalJpy = 0;
+            let totalTwd = 0;
+            container.innerHTML = accountingData.map((item, idx) => {
+                totalJpy += Number(item.jpy) || 0;
+                totalTwd += Number(item.twd) || 0;
+                return `
+                <div class="flex items-center justify-between py-3 border-b border-slate-50">
+                    <div class="flex flex-col flex-1 pr-2">
+                        <span class="text-sm font-bold text-slate-700 leading-snug">${item.name}</span>
+                        <div class="text-[10px] text-slate-400 mt-1 flex items-center gap-2">
+                            <span class="bg-slate-100 px-2 py-0.5 rounded text-slate-500">${item.payer}</span>
+                            <span>${item.time || ''}</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end mr-3">
+                        <span class="font-black text-orange-500 leading-none">¥${item.jpy}</span>
+                        <span class="text-[10px] text-slate-400 mt-1">NT$${item.twd}</span>
+                    </div>
+                    <button onclick="delAccounting(${idx})" class="text-slate-200 hover:text-red-500 px-2 h-full"><i class="fas fa-times"></i></button>
+                </div>`;
+            }).join('');
+            document.getElementById('acc-total').innerHTML = `¥${totalJpy} <span class="text-sm font-bold text-slate-400 ml-1">(NT$${totalTwd})</span>`;
+        }
+        function addAccounting() {
+            const name = document.getElementById('newAccName').value;
+            const payer = document.getElementById('newAccPayer').value;
+            const jpy = document.getElementById('newAccJpy').value;
+            const twd = document.getElementById('newAccTwd').value;
+            
+            if(name.trim() && (jpy || twd)) {
+                const now = new Date();
+                const timeString = (now.getMonth() + 1) + '/' + now.getDate() + ' ' + (now.getHours() < 10 ? '0'+now.getHours() : now.getHours()) + ':' + (now.getMinutes() < 10 ? '0'+now.getMinutes() : now.getMinutes());
+                
+                accountingData.unshift({ 
+                    name, 
+                    payer, 
+                    jpy: Number(jpy) || 0,
+                    twd: Number(twd) || 0,
+                    time: timeString
+                });
+                
+                document.getElementById('newAccName').value = '';
+                document.getElementById('newAccJpy').value = '';
+                document.getElementById('newAccTwd').value = '';
+                saveStorage(); 
+                renderAccounting(); 
+                showNotification('帳目已經記上去囉！記得儲存到雲端！');
+            }
+        }
+        function delAccounting(idx) { 
+            accountingData.splice(idx, 1); 
+            saveStorage(); 
+            renderAccounting(); 
+            showNotification('帳目已刪除！記得儲存到雲端！');
+        }
+        
+        function calcT_acc() { const j = document.getElementById('accJpyV').value; document.getElementById('accTwdV').value = Math.round(j * 0.21); }
+        function calcJ_acc() { const t = document.getElementById('accTwdV').value; document.getElementById('accJpyV').value = Math.round(t / 0.21); }
 
         // Checklist Logic
         function renderChecklist() {
@@ -555,10 +851,10 @@
         }
         function addChecklist() {
             const val = document.getElementById('newChecklist').value;
-            if(val.trim()) { checklistData.push({ text: val, checked: false }); document.getElementById('newChecklist').value = ''; saveStorage(); renderChecklist(); }
+            if(val.trim()) { checklistData.push({ text: val, checked: false }); document.getElementById('newChecklist').value = ''; saveStorage(); renderChecklist(); showNotification('清單新增成功！記得儲存到雲端喔！'); }
         }
-        function delChecklist(idx) { checklistData.splice(idx, 1); saveStorage(); renderChecklist(); }
-        function toggleCheck(idx) { checklistData[idx].checked = !checklistData[idx].checked; saveStorage(); renderChecklist(); }
+        function delChecklist(idx) { checklistData.splice(idx, 1); saveStorage(); renderChecklist(); showNotification('清單已刪除！記得儲存到雲端喔！'); }
+        function toggleCheck(idx) { checklistData[idx].checked = !checklistData[idx].checked; saveStorage(); renderChecklist(); showNotification('狀態已更新！記得儲存到雲端喔！'); }
 
         // Currency Math
         function calcT() { const j = document.getElementById('jpyV').value; document.getElementById('twdV').value = Math.round(j * 0.21); }
@@ -616,9 +912,21 @@
 
         // 初始化
         window.onload = async function() {
+            const startTime = Date.now();
             await loadData();
+            
+            // 初始化時不顯示本地快取時間，待雲端載入成功後由 updateSyncTimeDisplay 更新
+            // 以確保顯示的是真正的雲端同步時間而非本機暫存時間
+            
             renderChecklist();
             showTab('pre');
+            
+            const elapsed = Date.now() - startTime;
+            if (elapsed < 800) await new Promise(r => setTimeout(r, 800 - elapsed));
+            
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.style.display = 'none', 300);
         };
     </script>
 
