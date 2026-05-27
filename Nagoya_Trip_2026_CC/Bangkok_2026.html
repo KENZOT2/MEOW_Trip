@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="zh-TW"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bangkok Trip 2026 - 共編版</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
+        body { font-family: 'Roboto', sans-serif; background-color: #f3f4f7; color: #1e293b; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        /* UI Mimic Styles */
+        .top-bar { background-color: #3b82f6; color: white; text-align: center; }
+        .date-card { width: 68px; height: 80px; border-radius: 14px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; background: white; color: #64748b; font-size: 11px; cursor: pointer; flex-shrink: 0; box-shadow: 0 1px 3px rgba(0,0,0,0.05); transition: 0.2s; border: 1px solid #e2e8f0; }
+        .date-card.active { background-color: #2563eb; color: white; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4); transform: translateY(-2px); border-color: transparent; }
+        .date-card .day-num { font-size: 20px; font-weight: 900; margin: 2px 0; }
+        
+        .timeline-card { background: white; border-radius: 18px; border: 1px solid #f1f5f9; padding: 16px; margin-bottom: 14px; display: flex; box-shadow: 0 2px 6px rgba(0,0,0,0.03);}
+        
+        /* Tags & Colors */
+        .tag { font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 900; margin-left: auto; text-transform: uppercase; letter-spacing: 0.5px;}
+        .type-flight .tag { background: #dbeafe; color: #1e40af; }
+        .type-transport .tag { background: #dcfce7; color: #166534; }
+        .type-hotel .tag { background: #f3e8ff; color: #6b21a8; }
+        .type-food .tag { background: #fef9c3; color: #854d0e; }
+        .type-activity .tag { background: #fee2e2; color: #991b1b; }
+        
+        .icon-box { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 15px; flex-shrink: 0;}
+        .type-flight .icon-box { color: #3b82f6; background: #eff6ff; }
+        .type-transport .icon-box { color: #10b981; background: #ecfdf5; }
+        .type-hotel .icon-box { color: #8b5cf6; background: #f5f3ff; }
+        .type-food .icon-box { color: #f59e0b; background: #fffbeb; }
+        .type-activity .icon-box { color: #ef4444; background: #fef2f2; }
+
+        .action-btn { background: white; border: 1px solid #e2e8f0; color: #475569; border-radius: 12px; padding: 10px 0; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; transition: 0.2s;}
+        .action-btn:active { transform: scale(0.95); background: #f8fafc; }
+        
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px);} to { opacity: 1; transform: translateY(0);} }
+        .strikethrough { text-decoration: line-through; color: #cbd5e1; }
+        
+        input[type="time"]::-webkit-calendar-picker-indicator { cursor: pointer; }
+
+        /* 編輯模式樣式 */
+        .edit-mode-btn { background: #10b981; color: white; }
+        .edit-mode-btn:hover { background: #059669; }
+        .editable:hover { background-color: #fef3c7; cursor: text; border-radius: 8px; transition: background-color 0.2s; }
+        .editing { background-color: #fef3c7; border: 2px solid #f59e0b; border-radius: 8px; padding: 4px 8px; }
+    </style>
+</head>
+<body class="pb-10">
+    <div id="loadingOverlay" class="fixed inset-0 bg-slate-900 bg-opacity-80 flex flex-col items-center justify-center z-[100] backdrop-blur-sm transition-opacity duration-300">
+        <div class="bg-white p-6 rounded-3xl shadow-2xl flex flex-col items-center min-w-[220px]">
+            <i class="fas fa-spinner fa-spin text-blue-500 text-4xl mb-3"></i>
+            <span id="loadingText" class="text-slate-700 font-bold text-sm tracking-widest uppercase">載入資料中...</span>
+        </div>
+    </div>
+
+    <div class="top-bar px-4 py-3 flex justify-between items-center sticky top-0 z-50 shadow-md gap-1">
+        <div class="flex flex-col items-start mr-auto truncate">
+            <div class="flex items-center gap-2">
+                <a href="index.html" class="text-white hover:text-slate-200 active:scale-90 transition">
+                    <i class="fas fa-arrow-left text-lg"></i>
+                </a>
+                <span class="font-bold text-sm tracking-widest uppercase truncate">Bangkok Trip</span>
+            </div>
+            <span id="lastSyncTime" class="text-[10px] opacity-80 font-medium tracking-tight ml-8">雲端確認中...</span>
+        </div>
+        <div class="flex gap-1.5">
+            <button onclick="refreshData()" class="bg-indigo-500 border border-indigo-400 text-white px-2 py-1.5 rounded-lg text-xs font-bold active:scale-95 transition shadow-sm flex items-center">
+                <i class="fas fa-sync-alt mr-1"></i>重整
+            </button>
+            <button onclick="saveToGoogleSheets()" class="relative bg-blue-600 border border-blue-400 text-white px-2 py-1.5 rounded-lg text-xs font-bold active:scale-95 transition shadow-sm flex items-center">
+                <i class="fas fa-cloud-upload-alt mr-1"></i><span id="saveBtnText">存雲端</span>
+                <span id="unsavedDot" class="hidden absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-500 border-2 border-white"></span>
+                </span>
+            </button>
+            <button onclick="toggleEditMode()" class="bg-green-500 border border-green-400 text-white px-2 py-1.5 rounded-lg text-xs font-bold active:scale-95 transition shadow-sm flex items-center">
+                <i class="fas fa-edit mr-1"></i><span id="editModeText">編輯</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-slate-50 px-4 py-5 border-b flex space-x-3 overflow-x-auto no-scrollbar">
+        <div class="date-card active" id="btn-pre" onclick="showTab('pre')">
+            <span class="text-[10px] text-slate-500 font-bold mb-0.5">PRE</span><span class="day-num"><i class="fas fa-tasks"></i></span><span class="text-[10px] text-slate-500">行前</span>
+        </div>
+        <div class="date-card" id="btn-d1" onclick="showTab('d1')"><span class="text-[10px] text-slate-500 font-bold mb-0.5">第1天</span><span class="text-[15px] font-black my-0.5">7/3</span><span class="text-[10px] text-slate-500">週五</span></div>
+        <div class="date-card" id="btn-d2" onclick="showTab('d2')"><span class="text-[10px] text-slate-500 font-bold mb-0.5">第2天</span><span class="text-[15px] font-black my-0.5">7/4</span><span class="text-[10px] text-slate-500">週六</span></div>
+        <div class="date-card" id="btn-d3" onclick="showTab('d3')"><span class="text-[10px] text-slate-500 font-bold mb-0.5">第3天</span><span class="text-[15px] font-black my-0.5">7/5</span><span class="text-[10px] text-slate-500">週日</span></div>
+        <div class="date-card" id="btn-d4" onclick="showTab('d4')"><span class="text-[10px] text-slate-500 font-bold mb-0.5">第4天</span><span class="text-[15px] font-black my-0.5">7/6</span><span class="text-[10px] text-slate-500">週一</span></div>
+        <div class="date-card" id="btn-d5" onclick="showTab('d5')"><span class="text-[10px] text-slate-500 font-bold mb-0.5">第5天</span><span class="text-[15px] font-black my-0.5">7/7</span><span class="text-[10px] text-slate-500">週二</span></div>
+        <div class="date-card" id="btn-d6" onclick="showTab('d6')"><span class="text-[10px] text-slate-500 font-bold mb-0.5">第6天</span><span class="text-[15px] font-black my-0.5">7/8</span><span class="text-[10px] text-slate-500">週三</span></div>
+        <div class="date-card" id="btn-d7" onclick="showTab('d7')"><span class="text-[10px] text-slate-500 font-bold mb-0.5">第7天</span><span class="text-[15px] font-black my-0.5">7/9</span><span class="text-[10px] text-slate-500">週四</span></div>
+        <div class="date-card" id="btn-d8" onclick="showTab('d8')"><span class="text-[10px] text-slate-500 font-bold mb-0.5">第8天</span><span class="text-[15px] font-black my-0.5">7/10</span><span class="text-[10px] text-slate-500">週五</span></div>
+        <div class="date-card" id="btn-d9" onclick="showTab('d9')"><span class="text-[10px] text-slate-500 font-bold mb-0.5">第9天</span><span class="text-[15px] font-black my-0.5">7/11</span><span class="text-[10px] text-slate-500">週六</span></div>
+        <div class="date-card" id="btn-d10" onclick="showTab('d10')"><span class="text-[10px] text-slate-500 font-bold mb-0.5">第10天</span><span class="text-[15px] font-black my-0.5">7/12</span><span class="text-[10px] text-slate-500">週日</span></div>
+        <div class="date-card" id="btn-acc" onclick="showTab('acc')">
+            <span class="text-[10px] text-slate-500 font-bold mb-0.5">ACC</span><span class="day-num"><i class="fas fa-yen-sign"></i></span><span class="text-[10px] text-slate-500">記帳</span>
+        </div>
+    </div>
+
+    <main class="p-4 max-w-lg mx-auto">
+        <div class="flex mb-6" id="day-header-area">
+            <div class="w-12 flex flex-col items-center pt-2">
+                <div class="w-9 h-9 rounded-full bg-blue-600 text-white flex items-center justify-center text-sm font-bold shadow-lg" id="current-day-circle"><i class="fas fa-flag"></i></div>
+            </div>
+            <div class="flex-1 pl-3">
+                <h2 class="text-xl font-black text-slate-800" id="current-day-text">Preparation</h2>
+                <div class="grid grid-cols-5 gap-2 mt-4" id="action-buttons" style="display: none;">
+                    <button class="action-btn text-blue-600" onclick="openAddModal('flight')"><i class="fas fa-plane"></i></button>
+                    <button class="action-btn text-purple-600" onclick="openAddModal('hotel')"><i class="fas fa-hotel"></i></button>
+                    <button class="action-btn text-amber-500" onclick="openAddModal('food')"><i class="fas fa-utensils"></i></button>
+                    <button class="action-btn text-green-600" onclick="openAddModal('transport')"><i class="fas fa-car"></i></button>
+                    <button class="action-btn text-red-500" onclick="openAddModal('activity')"><i class="fas fa-star"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <div id="pre" class="tab-content space-y-5 active">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 class="font-bold text-slate-700 mb-3"><i class="fas fa-calculator text-teal-500 mr-2"></i> 雙向匯率 (0.97)</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">THB 泰銖</p>
+                        <input type="number" id="thbV" oninput="calcT()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700" placeholder="฿">
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">TWD 台幣</p>
+                        <input type="number" id="twdV" oninput="calcTHB()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700" placeholder="$">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 class="font-bold text-slate-700 mb-4"><i class="fas fa-list-check text-rose-500 mr-2"></i> 行前行李準備清單</h3>
+                <div class="flex mb-4">
+                    <input type="text" id="newChecklist" class="flex-grow p-3 text-sm bg-slate-50 border border-slate-200 rounded-l-xl outline-none" placeholder="輸入新增品項...">
+                    <button onclick="addChecklist()" class="bg-blue-600 text-white px-5 rounded-r-xl font-bold text-sm">新增</button>
+                </div>
+                <div id="checklist-render" class="space-y-1"></div>
+            </div>
+
+            <div class="pt-4 space-y-3">
+                <button onclick="exportHTML()" class="w-full py-3 bg-slate-800 text-white rounded-2xl font-bold flex items-center justify-center shadow-lg active:scale-95 transition-transform">
+                    <i class="fas fa-file-export mr-2"></i> 💾 匯出HTML檔案
+                </button>
+            </div>
+        </div>
+
+        <div id="d1" class="tab-content"><div id="list-d1"></div></div>
+        <div id="d2" class="tab-content"><div id="list-d2"></div></div>
+        <div id="d3" class="tab-content"><div id="list-d3"></div></div>
+        <div id="d4" class="tab-content"><div id="list-d4"></div></div>
+        <div id="d5" class="tab-content"><div id="list-d5"></div></div>
+        <div id="d6" class="tab-content"><div id="list-d6"></div></div>
+        <div id="d7" class="tab-content"><div id="list-d7"></div></div>
+        <div id="d8" class="tab-content"><div id="list-d8"></div></div>
+        <div id="d9" class="tab-content"><div id="list-d9"></div></div>
+        <div id="d10" class="tab-content"><div id="list-d10"></div></div>
+
+        <div id="acc" class="tab-content space-y-5">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 class="font-bold text-slate-700 mb-3"><i class="fas fa-calculator text-teal-500 mr-2"></i> 雙向匯率 (0.97)</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">THB 泰銖</p>
+                        <input type="number" id="accThbV" oninput="calcT_acc()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700" placeholder="฿">
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-slate-400 mb-1 uppercase tracking-wider">TWD 台幣</p>
+                        <input type="number" id="accTwdV" oninput="calcTHB_acc()" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl font-bold text-slate-700" placeholder="$">
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 class="font-bold text-slate-700 mb-4"><i class="fas fa-file-invoice-dollar text-orange-500 mr-2"></i> 新增記帳</h3>
+                <div class="space-y-3 mb-4">
+                    <div>
+                        <input type="text" id="newAccName" class="w-full p-3 text-sm bg-slate-50 border border-slate-200 rounded-xl outline-none" placeholder="1. 購買的名稱 (如：嘟嘟車)">
+                    </div>
+                    <div>
+                        <select id="newAccPayer" class="w-full p-3 text-sm bg-slate-50 border border-slate-200 rounded-xl outline-none text-slate-600 font-bold">
+                            <option value="凱翔" selected>凱翔</option>
+                            <option value="佩君">佩君</option>
+                            <option value="阿嬤">阿嬤</option>
+                            <option value="伊恩">伊恩</option>
+                            <option value="依妮">依妮</option>
+                        </select>
+                    </div>
+                    <div class="flex gap-2 items-center">
+                        <input type="number" id="newAccThb" oninput="document.getElementById('newAccTwd').value = this.value ? Math.round(this.value * 0.97) : ''" class="w-1/2 p-3 text-sm bg-slate-50 border border-slate-200 rounded-xl outline-none" placeholder="泰銖(฿)">
+                        <i class="fas fa-exchange-alt text-slate-300 text-xs text-center"></i>
+                        <input type="number" id="newAccTwd" oninput="document.getElementById('newAccThb').value = this.value ? Math.round(this.value / 0.97) : ''" class="w-1/2 p-3 text-sm bg-slate-50 border border-slate-200 rounded-xl outline-none" placeholder="台幣($)">
+                    </div>
+                    <button onclick="addAccounting()" class="w-full bg-orange-500 text-white p-3 rounded-xl font-bold text-sm shadow-md active:scale-95 transition-transform mt-2"><i class="fas fa-plus mr-1"></i> 新增帳目</button>
+                </div>
+                <div id="accounting-render" class="space-y-2 mt-4 pt-4 border-t border-slate-100"></div>
+                <div class="mt-4 pt-4 border-t border-slate-200 flex justify-between items-center px-1">
+                    <span class="font-bold text-slate-500">總花費</span>
+                    <span id="acc-total" class="font-black text-xl text-orange-600">฿0</span>
+                </div>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="addModal" class="fixed inset-0 bg-slate-900 bg-opacity-60 flex items-center justify-center z-[100] px-4 backdrop-blur-sm hidden">
+        <div class="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl">
+            <div class="bg-blue-600 px-5 py-4 flex justify-between items-center text-white">
+                <h3 class="font-bold" id="modal-title-text">新增行程項目</h3>
+                <button onclick="closeModal()" class="text-white opacity-80 hover:opacity-100"><i class="fas fa-times text-lg"></i></button>
+            </div>
+            <div class="p-5 space-y-4">
+                <input type="hidden" id="modal-edit-idx" value="">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">類型</label>
+                        <select id="modal-type" class="w-full p-2.5 border rounded-xl bg-slate-50 text-sm font-bold outline-none">
+                            <option value="flight">✈️ Flight</option>
+                            <option value="hotel">🏨 Hotel</option>
+                            <option value="food">🍴 Food</option>
+                            <option value="transport">🚆 Transport</option>
+                            <option value="activity">⭐ Activity</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">時間 (排序用)</label>
+                        <input type="time" id="modal-time" class="w-full p-2.5 border rounded-xl bg-slate-50 text-sm font-bold outline-none">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">行程標題</label>
+                    <input type="text" id="modal-title" class="w-full p-3 border rounded-xl bg-slate-50 text-sm font-bold outline-none" placeholder="例如: Check in Hotel">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-widest">詳細內容備註</label>
+                    <textarea id="modal-desc" class="w-full p-3 border rounded-xl bg-slate-50 text-sm h-28 placeholder-slate-400 outline-none" placeholder="輸入預約編號、交通細節、餐點內容..."></textarea>
+                </div>
+                <button onclick="saveItem()" class="w-full py-4 bg-blue-600 text-white rounded-2xl font-bold shadow-lg shadow-blue-200">確認加入行程</button>
+            </div>
+        </div>
+    </div>
+
+    <script id="app-script">
+        const config = {
+            'flight': { icon: 'fa-plane', label: 'Flight' },
+            'transport': { icon: 'fa-car', label: 'Transport' },
+            'hotel': { icon: 'fa-building', label: 'Hotel' },
+            'food': { icon: 'fa-utensils', label: 'Food' },
+            'activity': { icon: 'fa-star', label: 'Activity' }
+        };
+
+        const dayHeaders = {
+            'd1': { num: '1', text: 'Friday,<br>July 3' },
+            'd2': { num: '2', text: 'Saturday,<br>July 4' },
+            'd3': { num: '3', text: 'Sunday,<br>July 5' },
+            'd4': { num: '4', text: 'Monday,<br>July 6' },
+            'd5': { num: '5', text: 'Tuesday,<br>July 7' },
+            'd6': { num: '6', text: 'Wednesday,<br>July 8' },
+            'd7': { num: '7', text: 'Thursday,<br>July 9' },
+            'd8': { num: '8', text: 'Friday,<br>July 10' },
+            'd9': { num: '9', text: 'Saturday,<br>July 11' },
+            'd10': { num: '10', text: 'Sunday,<br>July 12' },
+            'acc': { num: '<i class="fas fa-yen-sign"></i>', text: 'Expense Tracker' }
+        };
+
+        let itinerary = {};
+        let checklistData = [];
+        let accountingData = [];
+        let editMode = false;
+        let googleSheetsEnabled = false;
+        let autoSaveTimer = null;
+        const GOOGLE_APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyb4iIxpUfx5YPzhE735-1J6MzWd3k9Fa89tGjEv7FqvreQAjHD1VGfGvRNc_m7kQGc/exec'; // 若有曼谷專屬 Google Sheet 可填寫於此
+
+        let currentDay = 'pre';
+
+        async function loadFromGoogleSheets() {
+            if (!GOOGLE_APPS_SCRIPT_URL || GOOGLE_APPS_SCRIPT_URL === '') return false;
+            try {
+                const loadUrl = GOOGLE_APPS_SCRIPT_URL + '?action=load&callback=handleGoogleSheetsResponse&t=' + new Date().getTime();
+                return new Promise((resolve) => {
+                    window.handleGoogleSheetsResponse = function(data) {
+                        if (data && data.success) {
+                            itinerary = data.data.itinerary;
+                            checklistData = data.data.checklistData;
+                            accountingData = data.data.accountingData || [];
+                            googleSheetsEnabled = true;
+                            if (data.data.lastUpdated) updateSyncTimeDisplay(data.data.lastUpdated);
+                            else updateSyncTimeDisplay();
+                            showNotification('已從Google試算表載入資料！');
+                            resolve(true);
+                        } else resolve(false);
+                        delete window.handleGoogleSheetsResponse;
+                    };
+                    const script = document.createElement('script');
+                    script.src = loadUrl;
+                    script.onerror = () => resolve(false);
+                    document.head.appendChild(script);
+                    setTimeout(() => resolve(false), 5000);
+                });
+            } catch (error) { return false; }
+        }
+
+        async function saveToGoogleSheets(isAutoSave = false) {
+            if (!GOOGLE_APPS_SCRIPT_URL) {
+                if(!isAutoSave) showNotification('Google Sheets URL未設定，僅儲存於本機。');
+                saveStorage(); 
+                document.getElementById('unsavedDot').classList.add('hidden');
+                updateSyncTimeDisplay();
+                return false;
+            }
+            
+            const overlay = document.getElementById('loadingOverlay');
+            const loadText = document.getElementById('loadingText');
+            
+            if (!isAutoSave) {
+                loadText.textContent = "儲存至雲端中...";
+                overlay.style.display = 'flex';
+                overlay.style.opacity = '1';
+            } else {
+                const saveBtn = document.querySelector('button[onclick="saveToGoogleSheets()"]');
+                const saveText = document.getElementById('saveBtnText');
+                saveBtn.classList.add('animate-pulse');
+                if (saveText) saveText.innerText = '自動存檔...';
+            }
+            
+            try {
+                const now = new Date();
+                const timeStr = now.toLocaleString('zh-TW', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true });
+                const formData = new FormData();
+                formData.append('action', 'save');
+                formData.append('data', JSON.stringify({ itinerary, checklistData, accountingData, lastUpdated: timeStr }));
+                
+                await fetch(GOOGLE_APPS_SCRIPT_URL, { method: 'POST', body: formData, mode: 'no-cors' });
+                
+                if (!isAutoSave) await new Promise(r => setTimeout(r, 800));
+                
+                document.getElementById('unsavedDot').classList.add('hidden');
+                updateSyncTimeDisplay(timeStr);
+                
+                if (!isAutoSave) showNotification('資料已儲存到Google試算表！');
+                else {
+                    const saveBtn = document.querySelector('button[onclick="saveToGoogleSheets()"]');
+                    const saveText = document.getElementById('saveBtnText');
+                    saveBtn.classList.remove('animate-pulse');
+                    if (saveText) saveText.innerText = '存雲端';
+                }
+            } catch (error) {
+                if (!isAutoSave) showNotification('Google試算表儲存失敗: ' + error.message);
+            }
+            
+            if (!isAutoSave) {
+                overlay.style.opacity = '0';
+                setTimeout(() => { overlay.style.display = 'none'; loadText.textContent = "載入資料中..."; }, 300);
+            }
+            return true;
+        }
+
+        function updateSyncTimeDisplay(timeStr) {
+            if (!timeStr) {
+                const now = new Date();
+                timeStr = now.toLocaleString('zh-TW', { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', hour12: true });
+            }
+            localStorage.setItem('bangkok_last_sync', timeStr);
+            const displayEl = document.getElementById('lastSyncTime');
+            if (displayEl) {
+                displayEl.innerText = '最後更新：' + timeStr;
+                displayEl.classList.add('text-green-400');
+                setTimeout(() => displayEl.classList.remove('text-green-400'), 2000);
+            }
+        }
+
+        async function refreshData() {
+            if(!document.getElementById('unsavedDot').classList.contains('hidden')) {
+                if(!confirm("您有未儲存的變更，確定要放棄這些變更並重整嗎？")) return;
+            }
+            
+            const overlay = document.getElementById('loadingOverlay');
+            const loadText = document.getElementById('loadingText');
+            overlay.style.display = 'flex';
+            setTimeout(() => overlay.style.opacity = '1', 10);
+            loadText.textContent = "下載最新資料...";
+            
+            const success = await loadFromGoogleSheets();
+            if(success) {
+                localStorage.removeItem('bangkok_itinerary');
+                localStorage.removeItem('bangkok_checklist');
+                localStorage.removeItem('bangkok_accounting');
+                document.getElementById('unsavedDot').classList.add('hidden');
+            } else {
+                loadStorage(); 
+                showNotification('重整完成 (目前為本機資料)');
+            }
+            
+            overlay.style.opacity = '0';
+            setTimeout(() => { overlay.style.display = 'none'; loadText.textContent = "載入資料中..."; }, 300);
+            showTab(currentDay);
+        }
+
+        async function loadData() {
+            const googleSheetsLoaded = await loadFromGoogleSheets();
+            if (!googleSheetsLoaded) {
+                loadDefaultData();
+                loadStorage();
+            } else {
+                localStorage.removeItem('bangkok_itinerary');
+                localStorage.removeItem('bangkok_checklist');
+                localStorage.removeItem('bangkok_accounting');
+            }
+        }
+
+        function loadDefaultData() {
+            itinerary = {
+                "d1": [
+                    {"type": "flight", "title": "去程航班：星宇 JX745", "time": "13:55", "desc": "出發：13:55 桃園國際機場 (T2)\n抵達：16:40 蘇凡納布國際機場\n飛行時間：3小時45分"},
+                    {"type": "hotel", "title": "入住飯店", "time": "18:00", "desc": "辦理 Check-in：The Davis Bangkok\n(本次旅程每晚皆入住於此)"}
+                ],
+                "d2": [], 
+                "d3": [], 
+                "d4": [
+                    {"type": "activity", "title": "夏令營 Day 1", "time": "09:15", "desc": "學生：Enid Yang & Ian Yang\n課程：House of Three Little Pigs & Sustainable Future City (Bilingual)\n時間：09:15-15:45\n費用：12,510 THB / 人"}
+                ], 
+                "d5": [
+                    {"type": "activity", "title": "夏令營 Day 2", "time": "09:15", "desc": "雙語夏令營\n時間：09:15-15:45"}
+                ], 
+                "d6": [
+                    {"type": "activity", "title": "夏令營 Day 3", "time": "09:15", "desc": "雙語夏令營\n時間：09:15-15:45"}
+                ], 
+                "d7": [
+                    {"type": "activity", "title": "夏令營 Day 4", "time": "09:15", "desc": "雙語夏令營\n時間：09:15-15:45"}
+                ], 
+                "d8": [
+                    {"type": "activity", "title": "夏令營 Day 5 (結業)", "time": "09:15", "desc": "雙語夏令營\n時間：09:15-15:45\n(恭喜結業！🎉)"}
+                ], 
+                "d9": [],
+                "d10": [
+                    {"type": "transport", "title": "前往機場", "time": "09:30", "desc": "辦理 The Davis Bangkok 退房，搭車前往蘇凡納布機場。"},
+                    {"type": "flight", "title": "回程航班：星宇 JX742", "time": "13:10", "desc": "出發：13:10 蘇凡納布國際機場\n抵達：18:00 桃園國際機場 (T2)\n飛行時間：3小時50分"}
+                ]
+            };
+            checklistData = [
+                {"text": "護照 (全家5人)", "checked": false},
+                {"text": "星宇航空電子機票", "checked": false},
+                {"text": "The Davis Bangkok 飯店憑證", "checked": false},
+                {"text": "夏令營報名文件 (Enid & Ian)", "checked": false},
+                {"text": "防蚊液 / 腸胃藥", "checked": false}
+            ];
+        }
+
+        function loadStorage() {
+            try {
+                const savedItinerary = localStorage.getItem('bangkok_itinerary');
+                const savedChecklist = localStorage.getItem('bangkok_checklist');
+                const savedAccounting = localStorage.getItem('bangkok_accounting');
+                
+                if(savedItinerary) {
+                    let parsed = JSON.parse(savedItinerary);
+                    if (parsed.d4 && parsed.d4.length === 0) {
+                        parsed.d1 = itinerary.d1;
+                        parsed.d4 = itinerary.d4;
+                        parsed.d5 = itinerary.d5;
+                        parsed.d6 = itinerary.d6;
+                        parsed.d7 = itinerary.d7;
+                        parsed.d8 = itinerary.d8;
+                        parsed.d10 = itinerary.d10;
+                    }
+                    itinerary = parsed;
+                }
+                if(savedChecklist) {
+                    let parsedCheck = JSON.parse(savedChecklist);
+                    if (parsedCheck.length < 4) checklistData = checklistData;
+                    else checklistData = parsedCheck;
+                }
+                if(savedAccounting) accountingData = JSON.parse(savedAccounting);
+            } catch (e) {
+                console.error("Storage parsing error, loading defaults", e);
+            }
+        }
+
+        function saveStorage() {
+            localStorage.setItem('bangkok_itinerary', JSON.stringify(itinerary));
+            localStorage.setItem('bangkok_checklist', JSON.stringify(checklistData));
+            localStorage.setItem('bangkok_accounting', JSON.stringify(accountingData));
+            document.getElementById('unsavedDot').classList.remove('hidden');
+            
+            if (autoSaveTimer) clearTimeout(autoSaveTimer);
+            if (GOOGLE_APPS_SCRIPT_URL) {
+                autoSaveTimer = setTimeout(() => { saveToGoogleSheets(true); }, 3000);
+            }
+        }
+
+        function timeToMins(t) { if(!t) return 0; const [h, m] = t.split(':').map(Number); return h * 60 + m; }
+        function formatTime(t) {
+            if(!t) return "";
+            let [h, m] = t.split(':').map(Number);
+            const ampm = h >= 12 ? 'PM' : 'AM';
+            h = h % 12 || 12;
+            return `${h}:${m < 10 ? '0'+m : m} ${ampm}`;
+        }
+
+        function toggleEditMode() {
+            editMode = !editMode;
+            const btn = document.getElementById('editModeText');
+            btn.textContent = editMode ? '關閉編輯' : '開啟編輯';
+            
+            if (editMode) {
+                document.body.classList.add('edit-mode');
+                makeEditable();
+            } else {
+                document.body.classList.remove('edit-mode');
+                removeEditable();
+            }
+        }
+
+        function makeEditable() {
+            document.querySelectorAll('.timeline-card h3, .timeline-card .text-slate-600').forEach(el => {
+                el.classList.add('editable');
+                el.contentEditable = true;
+                el.addEventListener('blur', function() {
+                    this.classList.remove('editing');
+                    saveDataChanges();
+                });
+                el.addEventListener('focus', function() { this.classList.add('editing'); });
+            });
+        }
+
+        function removeEditable() {
+            document.querySelectorAll('.editable').forEach(el => {
+                el.classList.remove('editable', 'editing');
+                el.contentEditable = false;
+            });
+        }
+
+        function saveDataChanges() {
+            if (currentDay === 'pre') return;
+            const cards = document.querySelectorAll(`#list-${currentDay} .timeline-card`);
+            cards.forEach((card, idx) => {
+                if (itinerary[currentDay] && itinerary[currentDay][idx]) {
+                    const titleEl = card.querySelector('h3');
+                    if (titleEl) itinerary[currentDay][idx].title = titleEl.textContent.trim();
+                    const descEl = card.querySelector('.text-slate-600');
+                    if (descEl) itinerary[currentDay][idx].desc = descEl.textContent.trim();
+                }
+            });
+            saveStorage();
+            showNotification('行程編輯成功！');
+        }
+
+        function renderDay(dayId) {
+            if(dayId === 'pre' || dayId === 'acc') return;
+            const container = document.getElementById('list-' + dayId);
+            
+            if(!itinerary[dayId]) itinerary[dayId] = [];
+            
+            itinerary[dayId].sort((a, b) => timeToMins(a.time) - timeToMins(b.time));
+
+            container.innerHTML = itinerary[dayId].map((item, idx) => {
+                const c = config[item.type] || { icon: 'fa-star', label: 'Activity' };
+                return `
+                <div class="timeline-card type-${item.type}">
+                    <div class="w-10 flex flex-col items-center text-slate-200 pt-1">
+                        <i class="fas fa-grip-vertical text-[9px] mb-1 opacity-40"></i>
+                        <div class="icon-box"><i class="fas ${c.icon}"></i></div>
+                        ${idx !== itinerary[dayId].length - 1 ? '<div class="w-[2px] h-full bg-slate-100 mt-2"></div>' : ''}
+                    </div>
+                    <div class="flex-1 ml-3">
+                        <div class="flex items-center">
+                            <h3 class="font-bold text-slate-800 text-[15px]">${item.title}</h3>
+                            <span class="tag">${c.label}</span>
+                        </div>
+                        <div class="flex items-center text-slate-400 text-[11px] mt-1 font-bold">
+                            <i class="far fa-clock mr-1"></i> ${formatTime(item.time)}
+                            <div class="ml-auto flex gap-3 text-sm">
+                                <button onclick="editItem('${dayId}', ${idx})" class="text-blue-400 hover:text-blue-600"><i class="fas fa-edit"></i></button>
+                                <button onclick="deleteItem('${dayId}', ${idx})" class="text-slate-300 hover:text-red-500"><i class="fas fa-trash"></i></button>
+                            </div>
+                        </div>
+                        ${item.desc ? `<div class="text-[13px] text-slate-600 mt-2.5 bg-slate-50 p-3 rounded-xl border border-slate-100 whitespace-pre-wrap leading-relaxed">${item.desc}</div>` : ''}
+                    </div>
+                </div>`;
+            }).join('');
+            
+            if (editMode) makeEditable();
+        }
+
+        function showTab(dayId) {
+            currentDay = dayId;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.date-card').forEach(el => el.classList.remove('active'));
+            document.getElementById(dayId).classList.add('active');
+            document.getElementById('btn-' + dayId).classList.add('active');
+            
+            const actionArea = document.getElementById('action-buttons');
+            const circle = document.getElementById('current-day-circle');
+            const text = document.getElementById('current-day-text');
+
+            if(dayId === 'pre') {
+                actionArea.style.display = 'none';
+                circle.innerHTML = '<i class="fas fa-flag"></i>';
+                text.innerHTML = 'Preparation';
+                renderChecklist();
+            } else if (dayId === 'acc') {
+                actionArea.style.display = 'none';
+                circle.innerHTML = dayHeaders[dayId].num;
+                text.innerHTML = dayHeaders[dayId].text;
+                renderAccounting();
+            } else {
+                actionArea.style.display = 'grid';
+                circle.innerText = dayHeaders[dayId].num;
+                text.innerHTML = dayHeaders[dayId].text;
+                renderDay(dayId);
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function openAddModal(type) {
+            document.getElementById('modal-type').value = type;
+            document.getElementById('modal-title').value = '';
+            document.getElementById('modal-desc').value = '';
+            document.getElementById('modal-time').value = '12:00';
+            document.getElementById('modal-edit-idx').value = '';
+            document.getElementById('modal-title-text').innerText = '新增行程項目';
+            document.getElementById('addModal').classList.remove('hidden');
+        }
+        function editItem(dayId, idx) {
+            const item = itinerary[dayId][idx];
+            document.getElementById('modal-type').value = item.type;
+            document.getElementById('modal-title').value = item.title;
+            document.getElementById('modal-desc').value = item.desc || '';
+            document.getElementById('modal-time').value = item.time;
+            document.getElementById('modal-edit-idx').value = idx;
+            document.getElementById('modal-title-text').innerText = '編輯行程項目';
+            document.getElementById('addModal').classList.remove('hidden');
+        }
+        function closeModal() { document.getElementById('addModal').classList.add('hidden'); }
+        
+        function saveItem() {
+            const type = document.getElementById('modal-type').value;
+            const title = document.getElementById('modal-title').value || 'New Activity';
+            const time = document.getElementById('modal-time').value || '12:00';
+            const desc = document.getElementById('modal-desc').value;
+            const editIdx = document.getElementById('modal-edit-idx').value;
+
+            if(!itinerary[currentDay]) itinerary[currentDay] = [];
+
+            if (editIdx !== '') {
+                itinerary[currentDay][editIdx] = { type, title, time, desc };
+                document.getElementById('modal-edit-idx').value = '';
+            } else {
+                itinerary[currentDay].push({ type, title, time, desc });
+            }
+            
+            saveStorage();
+            renderDay(currentDay);
+            closeModal();
+            showNotification(editIdx !== '' ? '行程修改成功！' : '新增行程成功！');
+        }
+        function deleteItem(dayId, idx) {
+            if(confirm("確定要移除這個行程點嗎？")) {
+                itinerary[dayId].splice(idx, 1);
+                saveStorage();
+                renderDay(dayId);
+                showNotification('已刪除！');
+            }
+        }
+
+        // Accounting Logic
+        function renderAccounting() {
+            const container = document.getElementById('accounting-render');
+            let totalThb = 0;
+            let totalTwd = 0;
+            container.innerHTML = accountingData.map((item, idx) => {
+                totalThb += Number(item.thb) || 0;
+                totalTwd += Number(item.twd) || 0;
+                return `
+                <div class="flex items-center justify-between py-3 border-b border-slate-50">
+                    <div class="flex flex-col flex-1 pr-2">
+                        <span class="text-sm font-bold text-slate-700 leading-snug">${item.name}</span>
+                        <div class="text-[10px] text-slate-400 mt-1 flex items-center gap-2">
+                            <span class="bg-slate-100 px-2 py-0.5 rounded text-slate-500">${item.payer}</span>
+                            <span>${item.time || ''}</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end mr-3">
+                        <span class="font-black text-orange-500 leading-none">฿${item.thb}</span>
+                        <span class="text-[10px] text-slate-400 mt-1">NT$${item.twd}</span>
+                    </div>
+                    <button onclick="delAccounting(${idx})" class="text-slate-200 hover:text-red-500 px-2 h-full"><i class="fas fa-times"></i></button>
+                </div>`;
+            }).join('');
+            document.getElementById('acc-total').innerHTML = `฿${totalThb} <span class="text-sm font-bold text-slate-400 ml-1">(NT$${totalTwd})</span>`;
+        }
+        
+        function addAccounting() {
+            const name = document.getElementById('newAccName').value;
+            const payer = document.getElementById('newAccPayer').value;
+            const thb = document.getElementById('newAccThb').value;
+            const twd = document.getElementById('newAccTwd').value;
+            
+            if(name.trim() && (thb || twd)) {
+                const now = new Date();
+                const timeString = (now.getMonth() + 1) + '/' + now.getDate() + ' ' + (now.getHours() < 10 ? '0'+now.getHours() : now.getHours()) + ':' + (now.getMinutes() < 10 ? '0'+now.getMinutes() : now.getMinutes());
+                
+                accountingData.unshift({ name, payer, thb: Number(thb) || 0, twd: Number(twd) || 0, time: timeString });
+                
+                document.getElementById('newAccName').value = '';
+                document.getElementById('newAccThb').value = '';
+                document.getElementById('newAccTwd').value = '';
+                saveStorage(); 
+                renderAccounting(); 
+                showNotification('帳目已經記上去囉！');
+            }
+        }
+        
+        function delAccounting(idx) { accountingData.splice(idx, 1); saveStorage(); renderAccounting(); showNotification('帳目已刪除！'); }        
+        
+        // 匯率計算 (全數採用 0.97，並加入防呆機制：如果清空數字，另一邊也會乖乖清空)
+        function calcT_acc() { const thb = document.getElementById('accThbV').value; document.getElementById('accTwdV').value = thb ? Math.round(Number(thb) * 0.97) : ''; }
+        function calcTHB_acc() { const twd = document.getElementById('accTwdV').value; document.getElementById('accThbV').value = twd ? Math.round(Number(twd) / 0.97) : ''; }
+        function calcT() { const thb = document.getElementById('thbV').value; document.getElementById('twdV').value = thb ? Math.round(Number(thb) * 0.97) : ''; }
+        function calcTHB() { const twd = document.getElementById('twdV').value; document.getElementById('thbV').value = twd ? Math.round(Number(twd) / 0.97) : ''; }        
+        
+        // Checklist Logic
+        function renderChecklist() {
+            const container = document.getElementById('checklist-render');
+            container.innerHTML = checklistData.map((item, idx) => `
+                <div class="flex items-center justify-between py-2.5 border-b border-slate-50">
+                    <div class="flex items-center">
+                        <input type="checkbox" id="chk-${idx}" class="w-5 h-5 accent-blue-600 mr-3 rounded" ${item.checked ? 'checked' : ''} onchange="toggleCheck(${idx})">
+                        <label for="chk-${idx}" class="text-sm font-medium ${item.checked ? 'strikethrough' : 'text-slate-700'}">${item.text}</label>
+                    </div>
+                    <button onclick="delChecklist(${idx})" class="text-slate-200 hover:text-red-500 px-2"><i class="fas fa-times"></i></button>
+                </div>
+            `).join('');
+        }
+        function addChecklist() {
+            const val = document.getElementById('newChecklist').value;
+            if(val.trim()) { checklistData.push({ text: val, checked: false }); document.getElementById('newChecklist').value = ''; saveStorage(); renderChecklist(); showNotification('清單新增成功！'); }
+        }
+        function delChecklist(idx) { checklistData.splice(idx, 1); saveStorage(); renderChecklist(); showNotification('清單已刪除！'); }
+        function toggleCheck(idx) { checklistData[idx].checked = !checklistData[idx].checked; saveStorage(); renderChecklist(); showNotification('狀態已更新！'); }
+
+        // 通知功能
+        function showNotification(message) {
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-20 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-pulse';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
+        }
+
+        // Export HTML Logic
+        function exportHTML() {
+            let fullHTML = document.documentElement.outerHTML;
+            const currentItineraryStr = JSON.stringify(itinerary, null, 4);
+            const currentChecklistStr = JSON.stringify(checklistData, null, 4);
+            
+            let newHTML = fullHTML.replace(/let itinerary = \{[\s\S]*?\};/, `let itinerary = ${currentItineraryStr};`);
+            newHTML = newHTML.replace(/let checklistData = \[[\s\S]*?\];/, `let checklistData = ${currentChecklistStr};`);
+            
+            const blob = new Blob([newHTML], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'Bangkok_Trip_2026_Collaborative.html';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showNotification("HTML檔案已匯出！");
+        }
+
+        window.onload = async function() {
+            const startTime = Date.now();
+            await loadData();
+            
+            renderChecklist();
+            showTab('pre');
+            
+            const elapsed = Date.now() - startTime;
+            if (elapsed < 800) await new Promise(r => setTimeout(r, 800 - elapsed));
+            
+            const overlay = document.getElementById('loadingOverlay');
+            overlay.style.opacity = '0';
+            setTimeout(() => overlay.style.display = 'none', 300);
+        };
+    </script>
+</body></html>

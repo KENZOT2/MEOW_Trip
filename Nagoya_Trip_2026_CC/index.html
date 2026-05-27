@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>家族旅遊儀表板 - Family Trips</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&display=swap');
+        body { font-family: 'Roboto', sans-serif; background-color: #f3f4f7; color: #1e293b; }
+        
+        /* 當滑鼠碰到卡片時，會有浮起來的動畫 */
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+    </style>
+</head>
+<body class="p-4 max-w-lg mx-auto flex flex-col items-center justify-center min-h-screen">
+
+    <!-- 這是首頁的大標題區塊 -->
+    <div class="text-center mb-10">
+        <div class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center text-3xl mx-auto mb-4 shadow-lg shadow-blue-200">
+            <i class="fas fa-globe-asia"></i>
+        </div>
+        <!-- 標題：家庭遠征 -->
+        <h1 class="text-2xl font-black text-slate-800 tracking-wider">家庭遠征</h1>
+        <p class="text-slate-500 font-bold text-sm mt-1">Family Expedition ✈️</p>
+    </div>
+
+    <!-- 這是兩趟旅程的選擇按鈕區塊 -->
+    <div class="w-full space-y-4">
+        
+        <!-- 曼谷旅行卡片 (排在上方) -->
+        <a href="Bangkok_2026.html" class="card-hover block bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <!-- 裝大象的圓形小格子，這裡的 w-14 h-14 是外框大小 -->
+                <div class="w-14 h-14 rounded-full bg-orange-50 flex items-center justify-center">
+                    <!-- 縮小後的大象 SVG，用 w-7 h-7 讓它乖乖待在格子裡 -->
+                    <svg viewBox="0 0 100 100" class="w-7 h-7">
+                        <circle cx="20" cy="45" r="18" fill="#94a3b8"/>
+                        <circle cx="80" cy="45" r="18" fill="#94a3b8"/>
+                        <circle cx="50" cy="50" r="25" fill="#cbd5e1"/>
+                        <path d="M40 65 Q40 95 60 90 Q65 90 65 85 Q65 80 55 80 Q50 80 50 65" fill="#cbd5e1"/>
+                        <circle cx="40" cy="45" r="3" fill="#1e293b"/>
+                        <circle cx="60" cy="45" r="3" fill="#1e293b"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="font-bold text-slate-800 text-lg">Bangkok Trip</h2>
+                    <p class="text-xs font-bold text-slate-400 mt-0.5">2026/7/3 - 7/12</p>
+                </div>
+            </div>
+            <i class="fas fa-chevron-right text-slate-300"></i>
+        </a>
+
+        <!-- 名古屋旅行卡片 (精準連結到 Nagoya_Trip_2026_CC.html) -->
+        <a href="Nagoya_Trip_2026_CC.html" class="card-hover block bg-white p-5 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <!-- 裝樂高小人的圓形小格子 -->
+                <div class="w-14 h-14 rounded-full bg-blue-50 flex items-center justify-center">
+                    <!-- 縮小後的樂高小人 SVG，同樣用 w-7 h-7 控制大小 -->
+                    <svg viewBox="0 0 100 100" class="w-7 h-7">
+                        <path d="M35 15 h30 v10 h-30 z" fill="#fbbf24" />
+                        <rect x="25" y="25" width="50" height="50" rx="10" fill="#fcd34d" />
+                        <circle cx="40" cy="45" r="5" fill="#1e293b" />
+                        <circle cx="60" cy="45" r="5" fill="#1e293b" />
+                        <path d="M35 60 Q50 75 65 60" stroke="#1e293b" stroke-width="4" fill="transparent" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div>
+                    <h2 class="font-bold text-slate-800 text-lg">Nagoya Trip</h2>
+                    <p class="text-xs font-bold text-slate-400 mt-0.5">2026/4/30 - 5/4</p>
+                </div>
+            </div>
+            <i class="fas fa-chevron-right text-slate-300"></i>
+        </a>
+
+    </div>
+
+</body>
+</html>
