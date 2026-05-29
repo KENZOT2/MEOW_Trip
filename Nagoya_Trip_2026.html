@@ -308,9 +308,14 @@
                 return new Promise((resolve) => {
                     window.handleGoogleSheetsResponse = function(data) {
                         if (data && data.success) {
-                            itinerary = data.data.itinerary;
-                            checklistData = data.data.checklistData;
-                            accountingData = data.data.accountingData || [];
+                            if (!data.data.itinerary || Object.keys(data.data.itinerary).length === 0) {
+                                loadDefaultData();
+                                setTimeout(() => saveToGoogleSheets(true), 1500);
+                            } else {
+                                itinerary = data.data.itinerary;
+                                checklistData = data.data.checklistData;
+                                accountingData = data.data.accountingData || [];
+                            }
                             googleSheetsEnabled = true;
                             
                             // 從雲端資料讀取最後更新時間
