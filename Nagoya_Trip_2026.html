@@ -491,6 +491,11 @@
         async function loadData() {
             // 先嘗試從Google Sheets載入
             const googleSheetsLoaded = await loadFromGoogleSheets();
+            // Auto-fix if data is scrambled (keys not starting with d)
+            if (itinerary && Object.keys(itinerary).length > 0 && !Object.keys(itinerary)[0].startsWith('d')) {
+                loadDefaultData();
+                setTimeout(() => saveToGoogleSheets(true), 1500);
+            }
             
             if (!googleSheetsLoaded) {
                 try {
@@ -522,47 +527,215 @@
 
         function loadDefaultData() {
             itinerary = {
-                "d1": [
-                    {"type": "flight", "title": "TPE 桃園航站 2 ➡️ NGO 名古屋航站 1", "time": "17:15", "desc": "17:15 - 21:05 ｜ ✈️ 去程航班 (CI 150)\n✈️ 中華航空訂位代號：\n全家（2大2小）：FYBH3Y\n阿嬤：FYKOV6"},
-                    {"type": "transport", "title": "Walk to Hotel", "time": "21:30", "desc": "領完行李後，由連通橋步行約 5-8 minutes分鐘即可抵達。"},
-                    {"type": "hotel", "title": "Check-in Hotel", "time": "22:00", "desc": "入住：機場島飯店（Comfort Hotel ）。\n任務：在便利商店買好隔天早餐，方便抵達後直接休息。"}
-                ],
-                "d2": [
-                    {"type": "transport", "title": "Meitetsu to Nagoya Sta.", "time": "08:30", "desc": "35 mins 車程 | 從機場飯店出發前往名古屋車站"},
-                    {"type": "activity", "title": "Kids Shopping Sprint", "time": "10:00", "desc": "📍 Bic Camera 名古屋駅西店 (玩具/鋼彈) | 10AM-9PM\n📍 JR Gate Tower (Disney/橡子共和國) | 10AM-9PM\n🚨 需在10:30前結束搭車前往金城埠頭！"},
-                    {"type": "transport", "title": "Aonami Line to Kinjofuto", "time": "10:30", "desc": "24 mins 車程 | 名古屋站至金城埠頭站"},
-                    {"type": "activity", "title": "Handicraft Activity", "time": "11:00", "desc": "Maker's Pier 商店街 | 手作活動已經預約完畢了 ✨"},
-                    {"type": "food", "title": "Lunch in Maker's Pier", "time": "12:30", "desc": "避開樂園人潮在此用餐"},
-                    {"type": "activity", "title": "LEGOLAND Hotel Explore", "time": "16:00", "desc": "房間尋寶解保險箱、搭迪斯可電梯、大廳玩樂高池"},
-                    {"type": "activity", "title": "Swimming Pool", "time": "17:30", "desc": "水上遊戲區 Water Play Area (已預約 17:30-18:00)"},
-                    {"type": "food", "title": "Birthday Dinner 🎂", "time": "19:00", "desc": "Bricks Family Restaurant 生日套裝行程"},
-                    {"type": "hotel", "title": "Check in Hotel", "time": "20:30", "desc": "LEGOLAND Japan Hotel (Kingdom房)\n預約編號: 1044829363"}
-                ],
-                "d3": [
-                    {"type": "food", "title": "Hotel Breakfast", "time": "07:30", "desc": "樂高飯店內享用"},
-                    {"type": "transport", "title": "Walk to Park", "time": "08:30", "desc": "5 mins 步行 | 退房寄放行李，步行至樂高樂園門口"},
-                    {"type": "activity", "title": "LEGOLAND Full Day", "time": "09:00", "desc": "住客優先入園 ✨\nAdventure 右下: 11潛水探險✨,12烏賊衝浪(甩尾飛船)🌊,9失落王國探險✨(室內射擊),10甲殼蟲反彈（寶寶版自由落體)\n\nLego city左上: 13消防學院💪,17駕駛學校✨,18海岸巡邏邏總部🌊(輕鬆開船)\n\nKnights kingdom 左上: 20飛龍徒弟(寶寶版雲霄飛車)\n左中: 25凱的空中射擊\n\npirate shores左中:26水花大戰🌊\n\n入口: 1工廠✨,5瞭望塔(休息)\n\n✨必去。🌊濕身。💪耗體力。"},
-                    {"type": "food", "title": "Lunch in LEGOLAND", "time": "11:00", "desc": "積木漢堡 (提早用餐避人潮)"},
-                    {"type": "transport", "title": "Aonami Line to Nagoya", "time": "18:00", "desc": "30 mins 車程 | 領完行李後前往市區"},
-                    {"type": "hotel", "title": "Check in Hotel", "time": "19:00", "desc": "相鐵 FRESA INN 名古屋站櫻通口"},
-                    {"type": "food", "title": "拉麵", "time": "19:00", "desc": "名古屋車站附近找晚餐"}
-                ],
-                "d4": [
-                    {"type": "transport", "title": "Taxi to Osu", "time": "09:30", "desc": "15 mins 車程 | 帶著小孩長輩推薦搭計程車"},
-                    {"type": "activity", "title": "Miwa Shrine", "time": "10:00", "desc": "兔子神社找石像、寫繪馬"},
-                    {"type": "food", "title": "Lunch in Osu", "time": "12:00", "desc": "大須商店街 / 一蘭拉麵"},
-                    {"type": "transport", "title": "Transport to Tokoname", "time": "13:30", "desc": "搭計程車回飯店領行李 ➔ μ-SKY 至機場寄放 ➔ 轉搭名鐵至常滑站"},
-                    {"type": "activity", "title": "Tokoname / Wonder Golf", "time": "16:00", "desc": "招財貓散步道、磁磚博物館、Wonder Golf"},
-                    {"type": "transport", "title": "Meitetsu to Airport", "time": "18:00", "desc": "10 mins 車程 | 從常滑搭車返回機場島"},
-                    {"type": "food", "title": "Dinner in Airport", "time": "18:30", "desc": "機場 4F 美食街或 FLIGHT OF DREAMS"},
-                    {"type": "hotel", "title": "Check in Hotel", "time": "20:00", "desc": "Centrair Hotel (機場島飯店)"}
-                ],
-                "d5": [
-                    {"type": "transport", "title": "Walk to Terminal", "time": "07:30", "desc": "5 mins 步行 | 從機場飯店步行至報到櫃台"},
-                    {"type": "flight", "title": "Flight (NGO - TPE)", "time": "09:55", "desc": "CI 151 (Terminal 1 to Terminal 2)\nSeat: 預約兒童餐 | 托運 23kg / 手提 7kg"}
-                ]
-            };
-            
+    "d1": [
+        {
+            "type": "transport",
+            "title": "家裡出發到機場",
+            "time": "13:20",
+            "desc": "機場接送5人\n"
+        },
+        {
+            "type": "flight",
+            "title": "TPE 桃園航站 2 ➡️ NGO 名古屋航站 1",
+            "time": "17:15",
+            "desc": "17:15 - 21:05 ｜ ✈️ 去程航班 (CI 150)\n✈️ 中華航空訂位代號：\n全家（2大2小）：FYBH3Y\n阿嬤：FYKOV6"
+        },
+        {
+            "type": "transport",
+            "title": "Walk to Hotel",
+            "time": "21:30",
+            "desc": "領完行李後，由連通橋步行約 5-8 minutes分鐘即可抵達。"
+        },
+        {
+            "type": "hotel",
+            "title": "Check-in Hotel",
+            "time": "22:00",
+            "desc": "入住：中部機場飯店 (Centrair Hotel)中部国際空港セントレアホテル。\n任務：在便利商店買好隔天早餐，方便抵達後直接休息。\n中部国際空港駅, 3F, 1 Chome-１-1 Centrair, Tokoname, Aichi 479-0881日本"
+        }
+    ],
+    "d2": [
+        {
+            "type": "transport",
+            "title": "Meitetsu to Nagoya Sta.",
+            "time": "08:30",
+            "desc": "35 mins 車程 | （搭 名鐵空港線）\n機場 ➔ 名古屋車站（搭乘一般特急，不加價）\n大人 ¥980 × 3 = ¥2,940\n小孩 ¥490 × 2 "
+        },
+        {
+            "type": "activity",
+            "title": "Kids Shopping Sprint",
+            "time": "10:00",
+            "desc": "📍 Bic Camera 名古屋駅西店 (3F玩具/鋼彈) | 10AM-9PM\n📍 JR Gate Tower (Disney/橡子共和國) | 10AM-9PM\n🚨 需在10:30前結束搭車前往金城埠頭！"
+        },
+        {
+            "type": "transport",
+            "title": "Aonami Line to Kinjofuto",
+            "time": "10:30",
+            "desc": "24 mins 車程 | 名古屋站至金城埠頭站\n（搭 青波線=あおなみ線）"
+        },
+        {
+            "type": "activity",
+            "title": "Handicraft Activity",
+            "time": "11:00",
+            "desc": "Maker's Pier 商店街 | 手作活動已經預約完畢了 ✨\n■予約番号\nx3DkrRh97\n■予約メニュー\nカップアイス　Spilled cup ice cream\n■オプション\nこぼれちゃったタイプ（4個）"
+        },
+        {
+            "type": "food",
+            "title": "Lunch in Maker's Pier",
+            "time": "12:30",
+            "desc": "避開樂園人潮在此用餐"
+        },
+        {
+            "type": "activity",
+            "title": "LEGOLAND Hotel Explore",
+            "time": "16:00",
+            "desc": "房間尋寶解保險箱、搭迪斯可電梯、大廳玩樂高池。📝 預約基本資訊\n預約編號：1044829363\n入住日期：2026年5月1日（週五）－ 5月2日（週六），共一泊。\n房型：Kingdom Suite 王國主題套房（景觀房/含沙發床）。\n入住人數：3 位大人、2 位小孩。\n總費用：JPY 129,000（已支付）。\n\n🎂 生日專案專屬行程 (Birthday Resort Package)\n這份專案包含許多生日驚喜，請留意時間安排喔：\n\n第一天 (5/1)\n16:00：辦理入住。\n16:30 - 17:00：水上玩樂區 (Water Play Area)（專案已預留時段，建議先在房間換好泳衣）。\n18:30：生日晚餐（Bricks Family Restaurant）。\n注意：專案僅含生日主角的餐點與蛋糕，其餘家人的餐點需現場付費。\n房間驚喜：包含生日佈置、生日回憶本、游擊任務包、寶箱解謎。\n\n第二天 (5/2)\n開園後至 11:00：在生日房內進行家庭紀念攝影。\n16:00 後：領取紀念照片。\n\n💡 溫馨提醒\n早餐預約：入住當天 16:00 - 23:00 記得透過 E-mail 裡的連結預約隔天的早餐時段。\n行李寄放：當天早上抵達後可以先去櫃檯寄放行李並領取貼紙、說明書。"
+        },
+        {
+            "type": "activity",
+            "title": "Swimming Pool",
+            "time": "17:30",
+            "desc": "水上遊戲區 Water Play Area (已預約 17:30-18:00)"
+        },
+        {
+            "type": "food",
+            "title": "Birthday Dinner 🎂",
+            "time": "19:00",
+            "desc": "Bricks Family Restaurant 生日套裝行程"
+        },
+        {
+            "type": "hotel",
+            "title": "Check in Hotel",
+            "time": "20:30",
+            "desc": "LEGOLAND Japan Hotel (Kingdom房)\n預約編號: 1044829363"
+        }
+    ],
+    "d3": [
+        {
+            "type": "food",
+            "title": "Hotel Breakfast",
+            "time": "07:30",
+            "desc": "樂高飯店內享用"
+        },
+        {
+            "type": "transport",
+            "title": "Walk to Park",
+            "time": "08:30",
+            "desc": "5 mins 步行 | 退房寄放行李，步行至樂高樂園門口"
+        },
+        {
+            "type": "activity",
+            "title": "LEGOLAND Full Day",
+            "time": "09:00",
+            "desc": "住客優先入園 ✨\nAdventure 右下: 11潛水探險✨,12烏賊衝浪(甩尾飛船)🌊,9失落王國探險✨(室內射擊),10甲殼蟲反彈（寶寶版自由落體)\n\nLego city左上: 13消防學院💪,17駕駛學校✨,18海岸巡邏邏總部🌊(輕鬆開船)\n\nKnights kingdom 左上: 20飛龍徒弟(寶寶版雲霄飛車)\n左中: 25凱的空中射擊\n\npirate shores左中:26水花大戰🌊\n\n入口: 1工廠✨,5瞭望塔(休息)\n\n✨必去。🌊濕身。💪耗體力。"
+        },
+        {
+            "type": "food",
+            "title": "Lunch in LEGOLAND",
+            "time": "11:00",
+            "desc": "積木漢堡 (提早用餐避人潮)"
+        },
+        {
+            "type": "transport",
+            "title": "Aonami Line to Nagoya",
+            "time": "18:00",
+            "desc": "30 mins 車程 | 領完行李後前往市區\n金城埠頭 → 名古屋站\n（搭 青波線=あおなみ線）"
+        },
+        {
+            "type": "hotel",
+            "title": "Check in Hotel",
+            "time": "19:00",
+            "desc": "走700M\n千代倉飯店宿名古屋\nChiyokura Hotel Shuku Nagoya\n10-18 Takebashi-chou Nakamura-ku Nagoya-shi Aichi , 名古屋站, 名古屋, 日本, 453-0016"
+        },
+        {
+            "type": "food",
+            "title": "拉麵",
+            "time": "19:00",
+            "desc": "名古屋車站 附近找晚餐\n西口往東：名古屋驛麵通 拉麵街\nhttps://www.nsk-eki.com/nagoya/tw/\n名駅式擔擔麵\n和歌山拉麵 KINOKAWA軒\n喜多方拉麵 藏MACHI\n札幌拉麵　HOKUTO亭\n博多拉麵 一風堂\n函館拉麵 醐RYOU\n"
+        }
+    ],
+    "d4": [
+        {
+            "type": "transport",
+            "title": "Taxi to Osu",
+            "time": "08:30",
+            "desc": "15 mins 車程 | 帶著小孩長輩推薦搭計程車"
+        },
+        {
+            "type": "activity",
+            "title": "Miwa Shrine",
+            "time": "10:00",
+            "desc": "兔子神社找石像、寫繪馬"
+        },
+        {
+            "type": "food",
+            "title": "Lunch in Osu",
+            "time": "12:00",
+            "desc": "大須商店街 / 一蘭拉麵\n或者中午到常滑附近用餐"
+        },
+        {
+            "type": "transport",
+            "title": "Transport to Tokoname TA22",
+            "time": "13:30",
+            "desc": "搭計程車回飯店領行李 ➔ μ-SKY 至機場寄放 ➔ 轉搭名鐵至常滑站TA22\n\nμ-SKY，全家都要加購 ¥450 的特別車廂券\n大人 (¥980 + ¥450) × 3 = ¥4,290\n小孩 (¥490 + ¥450) × 2 = ¥1,880\n👉 小計：¥6,170"
+        },
+        {
+            "type": "activity",
+            "title": "Tokoname / Wonder Golf",
+            "time": "13:50",
+            "desc": "先經過大型招財貓，至觀光會所，再沿著招財貓散步道，觀光地圖的數字走一圈。\n若時間不夠或體力不夠，走到6轉角吃冰後，就返程(再經過常滑牛奶)，跳過磁磚博物館。"
+        },
+        {
+            "type": "transport",
+            "title": "TA22-->TA23臨空常滑站",
+            "time": "15:00",
+            "desc": "位於常滑站的下一站，靠近永旺夢樂城常滑。Minigolf在這邊"
+        },
+        {
+            "type": "activity",
+            "title": "永旺夢樂城/高爾夫",
+            "time": "16:00",
+            "desc": "Wonder Golf\n永旺夢樂城買伴手禮 JINS\n\n購物城買玩具三間店:\nhttps://maps.app.goo.gl/3rWaPohmzdgJQJj58?g_st=il\nhttps://maps.app.goo.gl/XpV3z191MaZ3SSVu5?g_st=il\nTHREEPPY。購物城也有uniqlo。購物城走到底出口有賽車&高爾夫"
+        },
+        {
+            "type": "transport",
+            "title": "Meitetsu to Airport",
+            "time": "18:00",
+            "desc": "10 mins 車程 | 從常滑搭車返回機場島"
+        },
+        {
+            "type": "food",
+            "title": "Dinner in 臨空常滑/Airport",
+            "time": "18:30",
+            "desc": "常滑吃晚餐 或\n機場 4F 美食街\n或 FLIGHT OF DREAMS"
+        },
+        {
+            "type": "hotel",
+            "title": "Check in Hotel",
+            "time": "20:00",
+            "desc": "Centrair Hotel (機場島飯店)"
+        }
+    ],
+    "d5": [
+        {
+            "type": "transport",
+            "title": "Walk to Terminal",
+            "time": "07:30",
+            "desc": "5 mins 步行 | 從機場飯店步行至報到櫃台"
+        },
+        {
+            "type": "flight",
+            "title": "Flight (NGO - TPE)",
+            "time": "09:55",
+            "desc": "CI 151 (Terminal 1 to Terminal 2)\nSeat: 預約兒童餐 | 托運 23kg / 手提 7kg"
+        },
+        {
+            "type": "transport",
+            "title": "5人一起回台北",
+            "time": "12:00",
+            "desc": "11:55 抵達桃園機場"
+        }
+    ]
+};
             checklistData = [
                 {"text": "機票代號 (全家:FYBH3Y | 嬤:FYKOV6)", "checked": false},
                 {"text": "護照 (全家5人)", "checked": false},
